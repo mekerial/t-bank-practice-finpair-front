@@ -1,0 +1,221 @@
+.transactions {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.transactions__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.transactions__title {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  color: var(--color-text);
+}
+
+.transactions__filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 800px) {
+  .transactions__filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+.filter-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  padding: 0 16px;
+  height: 44px;
+}
+
+.filter-input__icon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.filter-input__control {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--color-text);
+  width: 100%;
+}
+
+.filter-input__control::placeholder {
+  color: var(--color-text-muted);
+}
+
+.transactions__summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 800px) {
+  .transactions__summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+.summary-card {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.summary-card__label {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.summary-card__value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 32px;
+}
+
+.summary-card__value--income {
+  color: var(--color-primary);
+}
+
+.summary-card__value--expense {
+  color: var(--color-danger);
+}
+
+.summary-card__hint {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.summary-card__hint--accent {
+  color: var(--color-success);
+}
+
+.tx-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.tx-list__empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.tx-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tx-row:last-child {
+  border-bottom: none;
+}
+
+.tx-row__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.tx-row__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.tx-row__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tx-row__category {
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--color-text);
+}
+
+.tx-row__date {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.tx-row__amount {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.tx-row__amount--income {
+  color: var(--color-primary);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.pagination__btn,
+.pagination__page {
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.pagination__btn:hover,
+.pagination__page:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.pagination__page--active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.pagination__page--active:hover {
+  background: var(--color-primary-hover);
+}

@@ -2,7 +2,7 @@
 
 **FinPair Frontend** — клиентская часть приложения для совместного управления финансами пары.
 
-Приложение реализовано как SPA на React и работает с backend API FinPair. Frontend отвечает за отображение финансового состояния пары, управление транзакциями, аналитику, цели, настройки и раздел поддержки.
+Приложение реализовано как SPA на **React** и **TypeScript** и работает с backend API FinPair. Frontend отвечает за отображение финансового состояния пары, управление транзакциями, аналитику, цели, настройки и раздел поддержки 
 
 ## Назначение проекта
 
@@ -20,58 +20,113 @@
 
 ## Стек
 
-- React
-- Vite
-- JavaScript
-- ESLint
-- Prettier
-- REST API
-- Docker
+В проекте используются:
+
+- React;
+- TypeScript;
+- Vite;
+- React Router DOM;
+- ESLint;
+- Prettier;
+- REST API;
+- Docker.
+
 
 ## Архитектура проекта
 
-Проект построен как SPA-приложение с модульной структурой. В качестве подхода к организации кода используется feature-based структура с разделением на страницы, бизнес-функции, сущности и общие переиспользуемые модули, что хорошо подходит для React-приложения среднего размера и выше.
+Проект построен как SPA-приложение с модульной структурой. В качестве подхода к организации кода используется feature-based структура с разделением на страницы, бизнес-функции, сущности и общие переиспользуемые модули 
+
+Такой подход хорошо подходит для React-приложения среднего размера и выше, потому что:
+- упрощает масштабирование;
+- делает код более понятным;
+- позволяет переиспользовать общие модули;
+- разделяет UI, конфигурацию и бизнес-логику.
 
 ## Структура репозитория
 
 ```text
-finpair-frontend/
-├── README.md
+t-bank-practice-finpair-front-dev/
+├── .env.example
 ├── .gitignore
-├── package.json
-├── package-lock.json
-├── vite.config.js
-├── eslint.config.js
-├── .prettierrc
 ├── .prettierignore
-├── dockerfile
+├── .prettierrc
+├── eslint.config.js
 ├── index.html
-├── public/
+├── package-lock.json
+├── package.json
+├── README.md
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+├── vite.config.ts
+├── node_modules/
 └── src/
+    ├── App.tsx
+    ├── main.tsx
+    ├── vite-env.d.ts
     ├── app/
     │   ├── providers/
     │   ├── router/
+    │   │   └── AppRouter.tsx
     │   └── styles/
+    │       └── index.css
     ├── pages/
     │   ├── auth/
+    │   │   ├── LoginPage.tsx
+    │   │   ├── RegisterPage.tsx
+    │   │   └── auth.css
     │   ├── dashboard/
+    │   │   ├── DashboardPage.tsx
+    │   │   └── dashboard.css
     │   ├── transactions/
+    │   │   ├── TransactionsPage.tsx
+    │   │   └── transactions.css
     │   ├── analytics/
+    │   │   ├── AnalyticsPage.tsx
+    │   │   └── analytics.css
     │   ├── goals/
+    │   │   ├── GoalsPage.tsx
+    │   │   └── goals.css
     │   ├── settings/
-    │   └── support/
+    │   │   ├── SettingsPage.tsx
+    │   │   └── settings.css
+    │   ├── support/
+    │   │   ├── SupportPage.tsx
+    │   │   └── support.css
+    │   └── NotFoundPage.tsx
     ├── widgets/
+    │   └── Layout/
     ├── features/
     ├── entities/
-    ├── shared/
-    │   ├── api/
-    │   ├── ui/
-    │   ├── lib/
-    │   ├── config/
-    │   └── constants/
-    ├── App.jsx
-    └── main.jsx
+    └── shared/
+        ├── api/
+        ├── config/
+        │   ├── env.ts
+        │   └── routes.ts
+        ├── constants/
+        │   └── app.ts
+        ├── lib/
+        │   └── mocks.ts
+        └── ui/
+            ├── Button/
+            ├── Card/
+            ├── Input/
+            ├── PagePlaceholder/
+            └── icons.tsx
 ```
+
+## Конфигурация проекта
+
+В корне проекта находятся основные конфигурационные файлы:
+
+- `vite.config.ts` — конфигурация сборщика Vite;
+- `eslint.config.js` — настройки линтинга;
+- `.prettierrc` — правила форматирования кода;
+- `.prettierignore` — список файлов и папок, которые Prettier не должен форматировать;
+- `tsconfig.json` — базовая конфигурация TypeScript;
+- `tsconfig.app.json` — конфигурация TypeScript для клиентской части приложения;
+- `tsconfig.node.json` — конфигурация TypeScript для Node.js-окружения и служебной части проекта;
+- `.env.example` — пример файла переменных окружения.
 
 ## Основные модули
 
@@ -145,22 +200,28 @@ API Gateway
     +--> SupportService
 ```
 
+
 ## Переменные окружения
 
-Пример файла `.env`:
+В проекте используется файл `.env.example` как шаблон для локальной конфигурации
+
+Пример переменной окружения:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000
 ```
 
+
 ## Сборщик и линтер
 
-В проекте используется **Vite** как сборщик. Он отвечает за запуск dev-сервера, production-сборку и локальный просмотр собранного приложения [web:59][web:64].
+В проекте используется **Vite** как сборщик. Он отвечает за запуск dev-сервера, production-сборку и локальный просмотр собранного приложения.
 
 Для проверки и форматирования кода используются:
 
-- **ESLint** — статический анализ и поиск ошибок в коде [web:95][web:49];
-- **Prettier** — единообразное форматирование файлов [web:106][web:130].
+- **ESLint** — статический анализ и поиск ошибок в коде;
+- **Prettier** — единообразное форматирование файлов.
+
+Также проект использует **TypeScript**, поэтому часть контроля качества обеспечивается типизацией и конфигурацией через `tsconfig`-файлы.
 
 ## Скрипты
 
@@ -172,24 +233,32 @@ npm run lint
 npm run format
 ```
 
-- `npm run dev` — запуск dev-сервера Vite [web:59]
-- `npm run build` — production-сборка проекта [web:64]
-- `npm run preview` — локальный просмотр production-сборки [web:64]
-- `npm run lint` — проверка кода ESLint [web:95]
-- `npm run format` — форматирование кода Prettier [web:106]
+- `npm run dev` — запуск dev-сервера;
+- `npm run build` — production-сборка проекта;
+- `npm run preview` — локальный просмотр production-сборки;
+- `npm run lint` — проверка кода ESLint;
+- `npm run format` — форматирование кода Prettier.
 
 ## Локальный запуск
 
 ### Требования
 
-- Node.js
-- npm
-- доступный backend API
+- Node.js;
+- npm;
+- доступный backend API.
 
 ### Установка зависимостей
 
 ```bash
 npm install
+```
+
+### Настройка переменных окружения
+
+Создай локальный файл `.env` на основе `.env.example`:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000
 ```
 
 ### Запуск в режиме разработки

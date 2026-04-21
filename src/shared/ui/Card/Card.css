@@ -1,0 +1,32 @@
+.card {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.card__title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 28px;
+  color: var(--color-text);
+}
+
+.card__action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card__body {
+  display: block;
+}

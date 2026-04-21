@@ -1,0 +1,22 @@
+.page-placeholder {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-sm);
+}
+
+.page-placeholder__title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.page-placeholder__description {
+  color: var(--color-text-muted);
+  margin: 0 0 24px;
+}
+
+.page-placeholder__body {
+  margin-top: 16px;
+}
