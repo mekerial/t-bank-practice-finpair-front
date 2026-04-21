@@ -55,7 +55,6 @@ t-bank-practice-finpair-front-dev/
 ├── package-lock.json
 ├── package.json
 ├── README.md
-├── README.2.md
 ├── tsconfig.app.json
 ├── tsconfig.json
 ├── tsconfig.node.json

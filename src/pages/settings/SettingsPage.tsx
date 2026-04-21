@@ -170,7 +170,7 @@ export default function SettingsPage() {
         </p>
         <div className="invite">
           <div className="invite__code">{mockSettings.inviteCode}</div>
-          <Button variant="secondary" onClick={handleCopy}>
+          <Button variant="primary" onClick={handleCopy}>
             {copied ? 'Скопировано' : 'Копировать'}
           </Button>
         </div>
@@ -213,7 +213,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="settings__actions">
-        <Button>Сохранить</Button>
+        <Button variant="primary">Сохранить</Button>
       </div>
     </div>
   )

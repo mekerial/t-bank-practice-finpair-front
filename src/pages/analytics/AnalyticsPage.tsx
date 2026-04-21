@@ -1,83 +1,128 @@
 import Card from '../../shared/ui/Card'
 import {
   mockAnalyticsKpi,
-  mockMonthlyTrend,
   mockCategories,
   mockPartnerCompare,
   mockInsights,
   formatMoneyPlain,
-  type MonthlyPoint,
   type CategorySlice,
   type PartnerComparePoint
 } from '../../shared/lib/mocks'
 import './analytics.css'
 
-function LineChart({ data }: { data: MonthlyPoint[] }) {
+function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
   const width = 800
   const height = 260
   const padding = { top: 20, right: 16, bottom: 30, left: 50 }
-  const max = Math.max(...data.map((d) => d.value))
+  const max = Math.max(...data.flatMap((d) => [d.a, d.b]))
   const min = 0
   const xStep =
     (width - padding.left - padding.right) / Math.max(1, data.length - 1)
   const yRange = height - padding.top - padding.bottom
 
-  const points = data.map((d, i) => {
+  const pointsA = data.map((d, i) => {
     const x = padding.left + i * xStep
-    const y =
-      padding.top + yRange - ((d.value - min) / (max - min)) * yRange
-    return { x, y, ...d }
+    const y = padding.top + yRange - ((d.a - min) / (max - min)) * yRange
+    return { x, y, month: d.month, value: d.a }
   })
 
-  const path = points
-    .map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`))
-    .join(' ')
+  const pointsB = data.map((d, i) => {
+    const x = padding.left + i * xStep
+    const y = padding.top + yRange - ((d.b - min) / (max - min)) * yRange
+    return { x, y, month: d.month, value: d.b }
+  })
+
+  const pathA = pointsA.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ')
+  const pathB = pointsB.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(' ')
+
+  const formatYValue = (val: number) => {
+    if (val >= 1000) return `${Math.round(val / 1000)}k`
+    return `${Math.round(val)}`
+  }
+
+  const gridLevels = [0, 0.25, 0.5, 0.75, 1]
 
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      width="100%"
-      height="260"
-      className="chart"
-    >
-      {[0, 0.25, 0.5, 0.75, 1].map((t, i) => (
+    <div>
+      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="260" className="chart">
         <line
-          key={i}
           x1={padding.left}
-          x2={width - padding.right}
-          y1={padding.top + yRange * t}
-          y2={padding.top + yRange * t}
-          stroke="#eef0f4"
+          y1={padding.top}
+          x2={padding.left}
+          y2={height - padding.bottom}
+          stroke="#94a3b8"
+          strokeWidth="1.5"
         />
-      ))}
-      <path d={path} fill="none" stroke="#6366f1" strokeWidth="2.5" />
-      {points.map((p) => (
-        <circle key={p.month} cx={p.x} cy={p.y} r="3.5" fill="#6366f1" />
-      ))}
-      {points.map((p, i) => (
-        <text
-          key={`t-${i}`}
-          x={p.x}
-          y={height - 10}
-          fontSize="11"
-          textAnchor="middle"
-          fill="#64748b"
-        >
-          {p.month}
-        </text>
-      ))}
-      {[0, 0.5, 1].map((t, i) => (
-        <text
-          key={`y-${i}`}
-          x={10}
-          y={padding.top + yRange * (1 - t) + 4}
-          fontSize="11"
-          fill="#64748b"
-        >
-          {Math.round((max * t) / 1000)}k
-        </text>
-      ))}
-    </svg>
+        
+        <line
+          x1={padding.left}
+          y1={height - padding.bottom}
+          x2={width - padding.right}
+          y2={height - padding.bottom}
+          stroke="#94a3b8"
+          strokeWidth="1.5"
+        />
+
+        {gridLevels.map((t, i) => {
+          const y = padding.top + yRange * (1 - t)
+          const valueAtLine = min + (max - min) * t
+          return (
+            <g key={i}>
+              <line
+                x1={padding.left}
+                x2={width - padding.right}
+                y1={y}
+                y2={y}
+                stroke="#eef0f4"
+                strokeWidth="1"
+              />
+              <text
+                x={padding.left - 8}
+                y={y + 4}
+                fontSize="11"
+                textAnchor="end"
+                fill="#64748b"
+              >
+                {formatYValue(valueAtLine)}
+              </text>
+            </g>
+          )
+        })}
+
+        <path d={pathA} fill="none" stroke="#6366f1" strokeWidth="2.5" />
+        <path d={pathB} fill="none" stroke="#a78bfa" strokeWidth="2.5" />
+
+        {pointsA.map((p) => (
+          <circle key={`a-${p.month}`} cx={p.x} cy={p.y} r="4" fill="#6366f1" stroke="#fff" strokeWidth="1.5" />
+        ))}
+
+        {pointsB.map((p) => (
+          <circle key={`b-${p.month}`} cx={p.x} cy={p.y} r="4" fill="#a78bfa" stroke="#fff" strokeWidth="1.5" />
+        ))}
+
+        {pointsA.map((p, i) => (
+          <text
+            key={`x-${i}`}
+            x={p.x}
+            y={height - padding.bottom + 15}
+            fontSize="11"
+            textAnchor="middle"
+            fill="#64748b"
+          >
+            {p.month}
+          </text>
+        ))}
+      </svg>
+      
+      <div className="bar-legend">
+        <span>
+          <span className="bar-legend__dot" style={{ background: '#6366f1' }} /> Партнёр А
+        </span>
+        <span>
+          <span className="bar-legend__dot" style={{ background: '#a78bfa' }} /> Партнёр Б
+        </span>
+      </div>
+    </div>
   )
 }
 
@@ -119,10 +164,18 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
   const height = 260
   const padding = { top: 20, right: 16, bottom: 30, left: 50 }
   const max = Math.max(...data.flatMap((d) => [d.a, d.b]))
+  const min = 0
   const plotW = width - padding.left - padding.right
   const plotH = height - padding.top - padding.bottom
   const groupW = plotW / data.length
   const barW = groupW / 3
+
+  const formatYValue = (val: number) => {
+    if (val >= 1000) return `${Math.round(val / 1000)}k`
+    return `${Math.round(val)}`
+  }
+
+  const gridLevels = [0, 0.25, 0.5, 0.75, 1]
 
   return (
     <svg
@@ -131,16 +184,50 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
       height="260"
       className="chart"
     >
-      {[0, 0.25, 0.5, 0.75, 1].map((t, i) => (
-        <line
-          key={i}
-          x1={padding.left}
-          x2={width - padding.right}
-          y1={padding.top + plotH * t}
-          y2={padding.top + plotH * t}
-          stroke="#eef0f4"
-        />
-      ))}
+      <line
+        x1={padding.left}
+        y1={padding.top}
+        x2={padding.left}
+        y2={height - padding.bottom}
+        stroke="#94a3b8"
+        strokeWidth="1.5"
+      />
+      
+      <line
+        x1={padding.left}
+        y1={height - padding.bottom}
+        x2={width - padding.right}
+        y2={height - padding.bottom}
+        stroke="#94a3b8"
+        strokeWidth="1.5"
+      />
+
+      {gridLevels.map((t, i) => {
+        const y = padding.top + plotH * (1 - t)
+        const valueAtLine = min + (max - min) * t
+        return (
+          <g key={i}>
+            <line
+              x1={padding.left}
+              x2={width - padding.right}
+              y1={y}
+              y2={y}
+              stroke="#eef0f4"
+              strokeWidth="1"
+            />
+            <text
+              x={padding.left - 8}
+              y={y + 4}
+              fontSize="11"
+              textAnchor="end"
+              fill="#64748b"
+            >
+              {formatYValue(valueAtLine)}
+            </text>
+          </g>
+        )
+      })}
+
       {data.map((d, i) => {
         const baseX = padding.left + i * groupW + groupW / 2 - barW
         const hA = (d.a / max) * plotH
@@ -163,16 +250,23 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
               fill="#a78bfa"
               rx="3"
             />
-            <text
-              x={baseX + barW}
-              y={height - 10}
-              fontSize="11"
-              textAnchor="middle"
-              fill="#64748b"
-            >
-              {d.month}
-            </text>
           </g>
+        )
+      })}
+
+      {data.map((d, i) => {
+        const baseX = padding.left + i * groupW + groupW / 2
+        return (
+          <text
+            key={`x-${i}`}
+            x={baseX}
+            y={height - padding.bottom + 15}
+            fontSize="11"
+            textAnchor="middle"
+            fill="#64748b"
+          >
+            {d.month}
+          </text>
         )
       })}
     </svg>
@@ -195,7 +289,7 @@ export default function AnalyticsPage() {
       </div>
 
       <Card title="Динамика расходов по месяцам">
-        <LineChart data={mockMonthlyTrend} />
+        <DoubleLineChart data={mockPartnerCompare} />
       </Card>
 
       <div className="analytics__grid-2">
