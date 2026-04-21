@@ -4,3 +4,10 @@ dist/
 build/
 *.log
 .DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# TypeScript incremental build info
+*.tsbuildinfo

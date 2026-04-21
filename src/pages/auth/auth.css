@@ -1,0 +1,45 @@
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.auth-form__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-form__icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.auth-form__title {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  color: var(--color-text);
+}
+
+.auth-form__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-form__form .btn {
+  margin-top: 8px;
+}
+
+.auth-form__footer {
+  text-align: center;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-text-secondary);
+}
+
+.auth-form__link {
+  color: var(--color-primary);
+  font-weight: 400;
+}
