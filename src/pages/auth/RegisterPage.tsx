@@ -1,7 +1,9 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
+import { registerUser, useAppDispatch, useAppSelector } from '../../app/store'
 import { ROUTES } from '../../shared/config/routes'
+import { getErrorMessage } from '../../shared/lib/asyncUtils'
 import Input from '../../shared/ui/Input'
 import Button from '../../shared/ui/Button'
 import './auth.css'
@@ -14,13 +16,16 @@ interface RegisterForm {
 }
 
 export default function RegisterPage() {
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  const user = useAppSelector((s) => s.auth.user)
   const [formError, setFormError] = useState('')
 
   const {
     control,
     handleSubmit,
     watch,
-    formState: { errors }
+    formState: { errors, isSubmitting }
   } = useForm<RegisterForm>({
     defaultValues: {
       name: '',
@@ -33,13 +38,30 @@ export default function RegisterPage() {
 
   const passwordValue = watch('password')
 
-  const onSubmit = (data: RegisterForm) => {
+  const onSubmit = async (data: RegisterForm) => {
     setFormError('')
-    console.log('register submit', data)
+    try {
+      await dispatch(
+        registerUser({
+          name: data.name,
+          email: data.email,
+          password: data.password
+        })
+      ).unwrap()
+      navigate(ROUTES.DASHBOARD, { replace: true })
+    } catch (e) {
+      const message =
+        typeof e === 'string' ? e : getErrorMessage(e)
+      setFormError(message)
+    }
   }
 
   const onInvalid = () => {
     setFormError('Заполните все обязательные поля')
+  }
+
+  if (user) {
+    return <Navigate to={ROUTES.DASHBOARD} replace />
   }
 
   return (
@@ -171,8 +193,8 @@ export default function RegisterPage() {
           </p>
         )}
 
-        <Button type="submit" fullWidth>
-          Создать аккаунт
+        <Button type="submit" fullWidth disabled={isSubmitting}>
+          {isSubmitting ? 'Создаём аккаунт…' : 'Создать аккаунт'}
         </Button>
       </form>
 

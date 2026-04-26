@@ -143,78 +143,239 @@ export interface Contacts {
 }
 
 export const mockUser: User = {
-  id: 'u-1',
-  name: 'Партнёр А',
-  email: 'partner@finpair.ru',
+  id: 'u-aleksey',
+  name: 'Алексей Морозов',
+  email: 'aleksey.morozov@yandex.ru',
   role: 'A',
-  income: 200000,
-  subtitle: 'Основной аккаунт'
+  income: 185000,
+  subtitle: 'Совладелец счёта'
 }
 
 export const mockPartner: User = {
-  id: 'u-2',
-  name: 'Партнёр Б',
-  email: 'partner-b@finpair.ru',
+  id: 'u-maria',
+  name: 'Мария Волкова',
+  email: 'maria.volkova@yandex.ru',
   role: 'B',
-  income: 150000,
-  subtitle: 'Второй аккаунт'
+  income: 142000,
+  subtitle: 'Совладелец счёта'
 }
 
+/** Сводка за текущий месяц: доходы обоих, фактические расходы, остаток */
 export const mockFinancialLoad: FinancialLoad = {
-  totalIncome: 200000,
-  totalExpense: 100000,
-  balance: 100000,
-  loadPercent: 50.5,
-  partnerSplit: { a: 60, b: 40 }
+  totalIncome: 327000,
+  totalExpense: 181400,
+  balance: 145600,
+  loadPercent: 55.5,
+  partnerSplit: { a: 57, b: 43 }
 }
 
 export const mockRecommendations: Recommendation[] = [
   {
     id: 1,
-    text: 'Партнёр Б может взять на себя оплату коммунальных услуг для баланса'
+    text: 'Доля расходов Марии по «Авто» выше среднего: можно перенести часть платежей на общий бюджет или скорректировать цель «Новый автомобиль».'
   },
   {
     id: 2,
-    text: 'Рекомендуем создать цель «Отпуск 2026» с вкладом 30 000₽/мес от каждого'
+    text: 'Остаток после обязательных платежей позволяет увеличить взнос по цели «Ремонт квартиры» на 12 000 ₽ без риска для подушки.'
   },
   {
     id: 3,
-    text: 'Оптимизация расходов на продукты может сэкономить до 12 000₽ в месяц'
+    text: 'Расходы на продукты стабильны; включите напоминание по чекам — так проще ловить сезонные всплески.'
   }
 ]
 
 export const mockMainExpenses: MainExpense[] = [
-  { id: 1, category: 'Ипотека', amount: 30000, payer: 'А', share: 80, fromBudget: 120000 },
-  { id: 2, category: 'Продукты', amount: 30000, payer: 'Общий', share: 100, fromBudget: 95000 },
-  { id: 3, category: 'Авто', amount: 60000, payer: 'Б', share: 100, fromBudget: 105000 }
+  {
+    id: 1,
+    category: 'Ипотека и ЖКХ',
+    amount: 56800,
+    payer: 'Общий',
+    share: 100,
+    fromBudget: 145600
+  },
+  {
+    id: 2,
+    category: 'Продукты и быт',
+    amount: 48600,
+    payer: 'Общий',
+    share: 100,
+    fromBudget: 88800
+  },
+  {
+    id: 3,
+    category: 'Детский сад и кружки',
+    amount: 22400,
+    payer: 'Б',
+    share: 65,
+    fromBudget: 40200
+  },
+  {
+    id: 4,
+    category: 'Авто: кредит, топливо, страховка',
+    amount: 31200,
+    payer: 'Б',
+    share: 90,
+    fromBudget: 17800
+  },
+  {
+    id: 5,
+    category: 'Подписки, связь, спорт',
+    amount: 14200,
+    payer: 'А',
+    share: 55,
+    fromBudget: 3600
+  },
+  {
+    id: 6,
+    category: 'Прочее и развлечения',
+    amount: 8200,
+    payer: 'А',
+    share: 50,
+    fromBudget: -4600
+  }
 ]
 
 export const mockTransactions: Transaction[] = [
-  { id: 1, category: 'Продукты', date: '12 апр 2026', payer: 'Партнёр А', amount: -12500 },
-  { id: 2, category: 'Зарплата', date: '11 апр 2026', payer: 'Партнёр А', amount: 100000 },
-  { id: 3, category: 'Ресторан', date: '10 апр 2026', payer: 'Партнёр Б', amount: -8900 },
-  { id: 4, category: 'Бензин', date: '09 апр 2026', payer: 'Партнёр Б', amount: -6500 },
-  { id: 5, category: 'Коммунальные', date: '08 апр 2026', payer: 'Партнёр А', amount: -15000 },
-  { id: 6, category: 'Развлечения', date: '07 апр 2026', payer: 'Партнёр Б', amount: -4200 },
-  { id: 7, category: 'Зарплата', date: '05 апр 2026', payer: 'Партнёр Б', amount: 100000 },
-  { id: 8, category: 'Продукты', date: '04 апр 2026', payer: 'Партнёр А', amount: -18500 },
-  { id: 9, category: 'Транспорт', date: '03 апр 2026', payer: 'Партнёр Б', amount: -2800 },
-  { id: 10, category: 'Ипотека', date: '01 апр 2026', payer: 'Партнёр А', amount: -30000 }
+  {
+    id: 1,
+    category: 'Зарплата',
+    date: '10 апр 2026',
+    payer: 'Партнёр А',
+    amount: 185000
+  },
+  {
+    id: 2,
+    category: 'Зарплата',
+    date: '8 апр 2026',
+    payer: 'Партнёр Б',
+    amount: 142000
+  },
+  {
+    id: 3,
+    category: 'Ипотека',
+    date: '5 апр 2026',
+    payer: 'Партнёр А',
+    amount: -45200
+  },
+  {
+    id: 4,
+    category: 'Продукты',
+    date: '12 апр 2026',
+    payer: 'Партнёр А',
+    amount: -16800
+  },
+  {
+    id: 5,
+    category: 'Продукты',
+    date: '9 апр 2026',
+    payer: 'Партнёр Б',
+    amount: -14200
+  },
+  {
+    id: 6,
+    category: 'Детский сад',
+    date: '7 апр 2026',
+    payer: 'Партнёр Б',
+    amount: -18900
+  },
+  {
+    id: 7,
+    category: 'Коммунальные платежи',
+    date: '6 апр 2026',
+    payer: 'Партнёр Б',
+    amount: -11600
+  },
+  {
+    id: 8,
+    category: 'Авто: страховка',
+    date: '4 апр 2026',
+    payer: 'Партнёр Б',
+    amount: -8400
+  },
+  {
+    id: 9,
+    category: 'Бензин',
+    date: '4 апр 2026',
+    payer: 'Партнёр Б',
+    amount: -5200
+  },
+  {
+    id: 10,
+    category: 'Ресторан',
+    date: '3 апр 2026',
+    payer: 'Партнёр Б',
+    amount: -7600
+  },
+  {
+    id: 11,
+    category: 'Спортзал',
+    date: '2 апр 2026',
+    payer: 'Партнёр А',
+    amount: -4500
+  },
+  {
+    id: 12,
+    category: 'Аптека и здоровье',
+    date: '1 апр 2026',
+    payer: 'Партнёр А',
+    amount: -6200
+  },
+  {
+    id: 13,
+    category: 'Подписки и связь',
+    date: '1 апр 2026',
+    payer: 'Партнёр А',
+    amount: -2190
+  },
+  {
+    id: 14,
+    category: 'Перевод на накопления',
+    date: '30 мар 2026',
+    payer: 'Партнёр А',
+    amount: -35000
+  },
+  {
+    id: 15,
+    category: 'Кино и досуг',
+    date: '29 мар 2026',
+    payer: 'Партнёр А',
+    amount: -2800
+  }
 ]
 
 export const mockTransactionsSummary: TransactionsSummary = {
-  income: 200000,
-  expense: 100000,
-  balance: 100000,
-  balanceChangePercent: 10.5,
-  period: 'апрель'
+  income: 327000,
+  expense: 181400,
+  balance: 145600,
+  balanceChangePercent: 4.2,
+  period: 'апрель 2026'
 }
 
 export const mockAnalyticsKpi: KpiItem[] = [
-  { id: 'avg', label: 'Средние расходы', value: '200 000₽', hint: 'в месяц' },
-  { id: 'top', label: 'Самая большая категория', value: 'Ипотека', hint: '30 000₽' },
-  { id: 'bal', label: 'Остаток', value: '100 000₽', hint: 'доступная сумма' },
-  { id: 'goals', label: 'Цели достигнуто', value: '2 из 5', hint: '40%' }
+  {
+    id: 'avg',
+    label: 'Расходы за месяц',
+    value: '181 400₽',
+    hint: 'по всем категориям, апрель'
+  },
+  {
+    id: 'top',
+    label: 'Крупнейшая статья',
+    value: 'Жильё',
+    hint: 'ипотека и ЖКХ ≈ 45 200 ₽'
+  },
+  {
+    id: 'bal',
+    label: 'Свободный остаток',
+    value: '145 600₽',
+    hint: 'после обязательных платежей'
+  },
+  {
+    id: 'goals',
+    label: 'Прогресс по целям',
+    value: '34%',
+    hint: 'средневзвешенно по активным целям'
+  }
 ]
 
 export const mockMonthlyTrend: MonthlyPoint[] = [
@@ -233,107 +394,125 @@ export const mockMonthlyTrend: MonthlyPoint[] = [
 ]
 
 export const mockCategories: CategorySlice[] = [
-  { name: 'Ипотека', value: 420000, color: '#6366f1' },
-  { name: 'Продукты', value: 180000, color: '#8b5cf6' },
-  { name: 'Авто', value: 240000, color: '#a78bfa' },
-  { name: 'Развлечения', value: 90000, color: '#c4b5fd' },
-  { name: 'Коммунальные', value: 60000, color: '#ddd6fe' },
-  { name: 'Другое', value: 30000, color: '#ede9fe' }
+  { name: 'Жильё и ЖКХ', value: 56800, color: '#6366f1' },
+  { name: 'Продукты и быт', value: 48600, color: '#8b5cf6' },
+  { name: 'Дети и образование', value: 22400, color: '#a78bfa' },
+  { name: 'Автомобиль', value: 31200, color: '#c4b5fd' },
+  { name: 'Здоровье и спорт', value: 10700, color: '#ddd6fe' },
+  { name: 'Остальное', value: 11700, color: '#ede9fe' }
 ]
 
 export const mockPartnerCompare: PartnerComparePoint[] = [
-  { month: 'Дек', a: 95000, b: 85000 },
-  { month: 'Янв', a: 120000, b: 100000 },
-  { month: 'Фев', a: 110000, b: 92000 },
-  { month: 'Март', a: 85000, b: 70000 },
-  { month: 'Апр', a: 120000, b: 80000 }
+  { month: 'Дек', a: 108000, b: 82000 },
+  { month: 'Янв', a: 112000, b: 91000 },
+  { month: 'Фев', a: 105000, b: 88000 },
+  { month: 'Март', a: 118000, b: 94000 },
+  { month: 'Апр', a: 121000, b: 96000 }
 ]
 
 export const mockInsights: Insight[] = [
   {
     id: 1,
-    title: 'Тренд месяца',
-    text: 'Расходы на развлечения выросли на 23% по сравнению с прошлым месяцем'
+    title: 'Расходы по неделям',
+    text: 'Вторая половина апреля плотнее по мелким тратам: чаще всего продукты и транспорт. Имеет смысл заранее заложить недельный лимит.'
   },
   {
     id: 2,
-    title: 'Возможность экономии',
-    text: 'Оптимизация расходов на транспорт может сэкономить до 15 000₽ в месяц'
+    title: 'Баланс вкладов',
+    text: 'По доле фактических трат ближе к доходу обоих партнёров распределение 57/43 — совпадает с выбранной схемой «по доходу».'
+  },
+  {
+    id: 3,
+    title: 'Цели',
+    text: 'Три цели идут в графике: по «Отпуск в Италии» осталось меньше четырёх взносов при текущем темпе.'
   }
 ]
 
 export const mockGoals: Goal[] = [
   {
     id: 1,
-    title: 'Новый дом 2026',
-    deadline: 'Декабрь 2026',
-    percent: 28,
-    collected: 850000,
+    title: 'Первый взнос за квартиру',
+    deadline: 'декабрь 2027',
+    percent: 31,
+    collected: 930000,
     target: 3000000,
-    monthly: 150000,
-    remaining: 2150000,
+    monthly: 88000,
+    remaining: 2070000,
     isMain: true
   },
   {
     id: 2,
     title: 'Отпуск в Италии',
-    deadline: 'Июль 2026',
-    percent: 77,
-    collected: 385000,
+    deadline: 'июль 2026',
+    percent: 78,
+    collected: 390000,
     target: 500000,
-    monthly: 40000,
-    remaining: 115000,
+    monthly: 38000,
+    remaining: 110000,
     isMain: false
   },
   {
     id: 3,
-    title: 'Новый автомобиль',
-    deadline: 'Март 2027',
-    percent: 38,
-    collected: 950000,
+    title: 'Семейный автомобиль',
+    deadline: 'март 2027',
+    percent: 41,
+    collected: 1020000,
     target: 2500000,
-    monthly: 120000,
-    remaining: 1550000,
+    monthly: 115000,
+    remaining: 1480000,
     isMain: false
   },
   {
     id: 4,
-    title: 'Образование',
-    deadline: 'Сент 2026',
-    percent: 40,
-    collected: 320000,
+    title: 'Обучение ребёнка',
+    deadline: 'сентябрь 2026',
+    percent: 44,
+    collected: 352000,
     target: 800000,
-    monthly: 60000,
-    remaining: 480000,
+    monthly: 52000,
+    remaining: 448000,
     isMain: false
   },
   {
     id: 5,
-    title: 'Ремонт квартиры',
-    deadline: 'Дек 2026',
-    percent: 40,
-    collected: 480000,
+    title: 'Ремонт гостиной',
+    deadline: 'ноябрь 2026',
+    percent: 52,
+    collected: 624000,
     target: 1200000,
-    monthly: 80000,
-    remaining: 720000,
+    monthly: 72000,
+    remaining: 576000,
     isMain: false
   }
 ]
 
 export const mockGoalTips: GoalTip[] = [
-  { id: 1, title: 'Автоматизация', text: 'Настройте автоматический перевод части зарплаты на цели' },
-  { id: 2, title: 'Оптимизация', text: 'Сократите расходы на развлечения на 15% для быстрого достижения целей' },
-  { id: 3, title: 'Инвестиции', text: 'Рассмотрите вклады с доходностью 8-10% годовых' }
+  {
+    id: 1,
+    title: 'Автоплатежи',
+    text: 'Привяжите дату перевода на цели к дню зарплаты — меньше соблазнов потратить раньше.'
+  },
+  {
+    id: 2,
+    title: 'Приоритет',
+    text: 'Две цели с близким дедлайном: разведите взносы по неделям, чтобы не перегружать один месяц.'
+  },
+  {
+    id: 3,
+    title: 'Резерв',
+    text: 'Держите на отдельном счёте подушку 3–6 месяцев расходов — цели не пострадают при форс-мажоре.'
+  }
 ]
 
 export const mockSettings: AppSettings = {
   profiles: {
-    a: { email: 'partner@finpair.ru', income: 200000 },
-    b: { email: 'partner-b@finpair.ru', income: 150000 }
+    a: { email: 'aleksey.morozov@yandex.ru', income: 185000 },
+    b: { email: 'maria.volkova@yandex.ru', income: 142000 }
   },
   splitType: 'by-income',
-  splitNote: 'На основе доходов: Партнёр А — 60%, Партнёр Б — 40%',
-  inviteCode: 'FINPAIR-ABC123',
+  splitNote:
+    'По доходам: Алексей — 57%, Мария — 43%. Можно переключить на 50/50 или задать доли вручную.',
+  inviteCode: 'FP-7K2M-Q9L4',
   currency: 'RUB',
   notifications: {
     newTransactions: true,

@@ -35,7 +35,5 @@ export const NAV_ITEMS: NavItem[] = [
   { path: ROUTES.ANALYTICS, label: 'Аналитика', icon: IconAnalytics },
   { path: ROUTES.GOALS, label: 'Цели', icon: IconGoals },
   { path: ROUTES.SETTINGS, label: 'Настройки', icon: IconSettings },
-  { path: ROUTES.SUPPORT, label: 'Помощь', icon: IconHelp },
-  { path: ROUTES.LOGIN, label: 'Вход', icon: IconHelp }, // для тестирования валидации 
-  { path: ROUTES.REGISTER, label: 'Регистрация', icon: IconHelp } // для тестирования валидации
+  { path: ROUTES.SUPPORT, label: 'Помощь', icon: IconHelp }
 ]

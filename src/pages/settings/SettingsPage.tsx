@@ -197,7 +197,7 @@ export default function SettingsPage() {
                         id="a-email"
                         label="Email"
                         type="email"
-                        placeholder="Например, partner@finpair.ru"
+                        placeholder="Например, maria.volkova@yandex.ru"
                         value={field.value}
                         onChange={field.onChange}
                       />

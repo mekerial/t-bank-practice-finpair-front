@@ -1,13 +1,13 @@
 import Card from '../../shared/ui/Card'
 import {
-  mockAnalyticsKpi,
-  mockCategories,
-  mockPartnerCompare,
-  mockInsights,
   formatMoneyPlain,
   type CategorySlice,
   type PartnerComparePoint
 } from '../../shared/lib/mocks'
+import type { AnalyticsPageData } from '../../shared/lib/mockPageLoaders'
+import { loadAnalyticsPageData } from '../../shared/lib/mockPageLoaders'
+import { useAsyncData } from '../../shared/hooks/useAsyncData'
+import AsyncDataView from '../../shared/ui/AsyncDataView'
 import './analytics.css'
 
 function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
@@ -273,13 +273,13 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
   )
 }
 
-export default function AnalyticsPage() {
-  return (
-    <div className="analytics">
-      <h1 className="analytics__title">Аналитика</h1>
+function AnalyticsPageContent({ data }: { data: AnalyticsPageData }) {
+  const { kpi, categories, partnerCompare, insights } = data
 
+  return (
+    <>
       <div className="kpi-grid">
-        {mockAnalyticsKpi.map((k) => (
+        {kpi.map((k) => (
           <div key={k.id} className="kpi">
             <div className="kpi__label">{k.label}</div>
             <div className="kpi__value">{k.value}</div>
@@ -289,15 +289,15 @@ export default function AnalyticsPage() {
       </div>
 
       <Card title="Динамика расходов по месяцам">
-        <DoubleLineChart data={mockPartnerCompare} />
+        <DoubleLineChart data={partnerCompare} />
       </Card>
 
       <div className="analytics__grid-2">
         <Card title="Распределение по категориям">
           <div className="pie-wrap">
-            <PieChart data={mockCategories} />
+            <PieChart data={categories} />
             <div className="pie-legend">
-              {mockCategories.map((c) => (
+              {categories.map((c) => (
                 <div key={c.name} className="pie-legend__item">
                   <span
                     className="pie-legend__dot"
@@ -314,7 +314,7 @@ export default function AnalyticsPage() {
         </Card>
 
         <Card title="Сравнение трат партнёров">
-          <BarChart data={mockPartnerCompare} />
+          <BarChart data={partnerCompare} />
           <div className="bar-legend">
             <span>
               <span
@@ -336,14 +336,35 @@ export default function AnalyticsPage() {
 
       <Card title="💡 Инсайты и рекомендации">
         <div className="insights">
-          {mockInsights.map((i) => (
-            <div key={i.id} className="insight">
-              <div className="insight__title">{i.title}</div>
-              <div className="insight__text">{i.text}</div>
+          {insights.map((item) => (
+            <div key={item.id} className="insight">
+              <div className="insight__title">{item.title}</div>
+              <div className="insight__text">{item.text}</div>
             </div>
           ))}
         </div>
       </Card>
+    </>
+  )
+}
+
+export default function AnalyticsPage() {
+  const { data, status, error, refetch } = useAsyncData('analytics', () =>
+    loadAnalyticsPageData()
+  )
+
+  return (
+    <div className="analytics">
+      <h1 className="analytics__title">Аналитика</h1>
+
+      <AsyncDataView
+        status={status}
+        error={error}
+        onRetry={refetch}
+        loadingLabel="Загружаем аналитику…"
+      >
+        {data ? <AnalyticsPageContent data={data} /> : null}
+      </AsyncDataView>
     </div>
   )
 }

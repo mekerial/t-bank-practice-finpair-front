@@ -1,7 +1,9 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
+import { loginUser, useAppDispatch, useAppSelector } from '../../app/store'
 import { ROUTES } from '../../shared/config/routes'
+import { getErrorMessage } from '../../shared/lib/asyncUtils'
 import Input from '../../shared/ui/Input'
 import Button from '../../shared/ui/Button'
 import './auth.css'
@@ -12,12 +14,15 @@ interface LoginForm {
 }
 
 export default function LoginPage() {
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  const user = useAppSelector((s) => s.auth.user)
   const [formError, setFormError] = useState('')
 
   const {
     control,
     handleSubmit,
-    formState: { errors }
+    formState: { errors, isSubmitting }
   } = useForm<LoginForm>({
     defaultValues: {
       email: '',
@@ -26,13 +31,24 @@ export default function LoginPage() {
     mode: 'onSubmit'
   })
 
-  const onSubmit = (data: LoginForm) => {
+  const onSubmit = async (data: LoginForm) => {
     setFormError('')
-    console.log('login submit', data)
+    try {
+      await dispatch(loginUser(data)).unwrap()
+      navigate(ROUTES.DASHBOARD, { replace: true })
+    } catch (e) {
+      const message =
+        typeof e === 'string' ? e : getErrorMessage(e)
+      setFormError(message)
+    }
   }
 
   const onInvalid = () => {
     setFormError('Заполните все обязательные поля')
+  }
+
+  if (user) {
+    return <Navigate to={ROUTES.DASHBOARD} replace />
   }
 
   return (
@@ -116,8 +132,8 @@ export default function LoginPage() {
           <p className="auth-form__error">{errors.password.message}</p>
         )}
 
-        <Button type="submit" fullWidth>
-          Войти
+        <Button type="submit" fullWidth disabled={isSubmitting}>
+          {isSubmitting ? 'Входим…' : 'Войти'}
         </Button>
       </form>
 
