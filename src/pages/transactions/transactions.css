@@ -8,6 +8,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
 }
 
 .transactions__title {
@@ -38,6 +39,7 @@
   border-radius: var(--radius-input);
   padding: 0 16px;
   height: 44px;
+  box-sizing: border-box;
 }
 
 .filter-input__icon {
@@ -47,13 +49,16 @@
 
 .filter-input__control {
   flex: 1;
+  width: 100%;
+  min-width: 0;
   border: none;
   background: transparent;
   outline: none;
   font-family: inherit;
   font-size: 14px;
   color: var(--color-text);
-  width: 100%;
+  box-sizing: border-box;
+  line-height: 1;
 }
 
 .filter-input__control::placeholder {
@@ -62,7 +67,7 @@
 
 .transactions__summary {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -218,4 +223,161 @@
 
 .pagination__page--active:hover {
   background: var(--color-primary-hover);
+}
+
+/* FORM */
+
+.transactions-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.transactions-form__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.transactions-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+  align-self: start;
+}
+
+.transactions-form__label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* Единый размер для всех контролов */
+.transactions-form input,
+.transactions-form select,
+.transactions-form .input,
+.transactions-form .input__field,
+.transactions-form .input__control,
+.transactions-form__select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+/* Обёртка Input */
+.transactions-form .input {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Если внутри Input есть поле */
+.transactions-form .input__control {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+/* Реальные поля */
+.transactions-form input,
+.transactions-form select,
+.transactions-form .input__field,
+.transactions-form__select {
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+  vertical-align: top;
+}
+
+/* Select */
+.transactions-form select,
+.transactions-form__select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* Placeholder */
+.transactions-form input::placeholder,
+.transactions-form .input__field::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+/* Focus */
+.transactions-form input:focus,
+.transactions-form select:focus,
+.transactions-form .input__field:focus,
+.transactions-form__select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+/* Options */
+.transactions-form__select option,
+.transactions-form select option {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+/* Errors */
+.transactions-form__error {
+  margin-top: -2px;
+  font-size: 13px;
+  line-height: 18px;
+  color: #dc2626;
+}
+
+.transactions-form__select--error,
+.transactions-form .input__field[aria-invalid='true'],
+.transactions-form input[aria-invalid='true'],
+.transactions-form select[aria-invalid='true'] {
+  border-color: #dc2626;
+}
+
+.transactions-form__select--error:focus,
+.transactions-form .input__field[aria-invalid='true']:focus,
+.transactions-form input[aria-invalid='true']:focus,
+.transactions-form select[aria-invalid='true']:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.transactions-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (max-width: 800px) {
+  .transactions-form__row {
+    grid-template-columns: 1fr;
+  }
+
+  .transactions-form__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
 }

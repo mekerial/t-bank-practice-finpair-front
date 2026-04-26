@@ -96,11 +96,12 @@ export interface Goal {
   id: number
   title: string
   deadline: string
-  percent: number
   collected: number
   target: number
   monthly: number
   remaining: number
+  percent: number
+  isMain: boolean
 }
 
 export interface GoalTip {
@@ -261,24 +262,62 @@ export const mockInsights: Insight[] = [
   }
 ]
 
-export const mockMainGoal: MainGoal = {
-  id: 0,
-  label: 'Главная цель',
-  title: 'Новый дом 2026',
-  deadline: 'Декабрь 2026',
-  monthly: 150000,
-  collected: 850000,
-  target: 3000000,
-  percent: 28,
-  remaining: 2150000,
-  monthsLeft: 14
-}
-
 export const mockGoals: Goal[] = [
-  { id: 1, title: 'Отпуск в Италии', deadline: 'Июль 2026', percent: 77, collected: 385000, target: 500000, monthly: 40000, remaining: 115000 },
-  { id: 2, title: 'Новый автомобиль', deadline: 'Март 2027', percent: 38, collected: 950000, target: 2500000, monthly: 120000, remaining: 1550000 },
-  { id: 3, title: 'Образование', deadline: 'Сент 2026', percent: 40, collected: 320000, target: 800000, monthly: 60000, remaining: 480000 },
-  { id: 4, title: 'Ремонт квартиры', deadline: 'Дек 2026', percent: 40, collected: 480000, target: 1200000, monthly: 80000, remaining: 720000 }
+  {
+    id: 1,
+    title: 'Новый дом 2026',
+    deadline: 'Декабрь 2026',
+    percent: 28,
+    collected: 850000,
+    target: 3000000,
+    monthly: 150000,
+    remaining: 2150000,
+    isMain: true
+  },
+  {
+    id: 2,
+    title: 'Отпуск в Италии',
+    deadline: 'Июль 2026',
+    percent: 77,
+    collected: 385000,
+    target: 500000,
+    monthly: 40000,
+    remaining: 115000,
+    isMain: false
+  },
+  {
+    id: 3,
+    title: 'Новый автомобиль',
+    deadline: 'Март 2027',
+    percent: 38,
+    collected: 950000,
+    target: 2500000,
+    monthly: 120000,
+    remaining: 1550000,
+    isMain: false
+  },
+  {
+    id: 4,
+    title: 'Образование',
+    deadline: 'Сент 2026',
+    percent: 40,
+    collected: 320000,
+    target: 800000,
+    monthly: 60000,
+    remaining: 480000,
+    isMain: false
+  },
+  {
+    id: 5,
+    title: 'Ремонт квартиры',
+    deadline: 'Дек 2026',
+    percent: 40,
+    collected: 480000,
+    target: 1200000,
+    monthly: 80000,
+    remaining: 720000,
+    isMain: false
+  }
 ]
 
 export const mockGoalTips: GoalTip[] = [

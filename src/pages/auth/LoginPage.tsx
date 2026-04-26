@@ -1,5 +1,6 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { useForm, Controller } from 'react-hook-form'
 import { ROUTES } from '../../shared/config/routes'
 import Input from '../../shared/ui/Input'
 import Button from '../../shared/ui/Button'
@@ -11,16 +12,27 @@ interface LoginForm {
 }
 
 export default function LoginPage() {
-  const [form, setForm] = useState<LoginForm>({ email: '', password: '' })
+  const [formError, setFormError] = useState('')
 
-  const handleChange =
-    (field: keyof LoginForm) => (event: ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [field]: event.target.value }))
-    }
+  const {
+    control,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<LoginForm>({
+    defaultValues: {
+      email: '',
+      password: ''
+    },
+    mode: 'onSubmit'
+  })
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    console.log('login submit', form)
+  const onSubmit = (data: LoginForm) => {
+    setFormError('')
+    console.log('login submit', data)
+  }
+
+  const onInvalid = () => {
+    setFormError('Заполните все обязательные поля')
   }
 
   return (
@@ -45,27 +57,64 @@ export default function LoginPage() {
         <h2 className="auth-form__title">Вход</h2>
       </div>
 
-      <form className="auth-form__form" onSubmit={handleSubmit}>
-        <Input
-          id="email"
-          label="Email"
-          type="email"
-          placeholder="your@email.com"
-          value={form.email}
-          onChange={handleChange('email')}
-          autoComplete="email"
-          required
+      <form
+        className="auth-form__form"
+        onSubmit={handleSubmit(onSubmit, onInvalid)}
+        noValidate
+      >
+        {formError && <p className="auth-form__common-error">{formError}</p>}
+
+        <Controller
+          name="email"
+          control={control}
+          rules={{
+            required: 'Введите email',
+            pattern: {
+              value: /\S+@\S+\.\S+/,
+              message: 'Некорректный email'
+            }
+          }}
+          render={({ field }) => (
+            <Input
+              id="email"
+              label="Email"
+              type="email"
+              placeholder="your@email.com"
+              autoComplete="email"
+              aria-invalid={errors.email ? 'true' : 'false'}
+              {...field}
+            />
+          )}
         />
-        <Input
-          id="password"
-          label="Пароль"
-          type="password"
-          placeholder="Ваш пароль"
-          value={form.password}
-          onChange={handleChange('password')}
-          autoComplete="current-password"
-          required
+        {errors.email && (
+          <p className="auth-form__error">{errors.email.message}</p>
+        )}
+
+        <Controller
+          name="password"
+          control={control}
+          rules={{
+            required: 'Введите пароль',
+            minLength: {
+              value: 6,
+              message: 'Минимум 6 символов'
+            }
+          }}
+          render={({ field }) => (
+            <Input
+              id="password"
+              label="Пароль"
+              type="password"
+              placeholder="Ваш пароль"
+              autoComplete="current-password"
+              aria-invalid={errors.password ? 'true' : 'false'}
+              {...field}
+            />
+          )}
         />
+        {errors.password && (
+          <p className="auth-form__error">{errors.password.message}</p>
+        )}
 
         <Button type="submit" fullWidth>
           Войти

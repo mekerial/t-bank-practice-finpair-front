@@ -1,16 +1,20 @@
+import { useMemo, useState } from 'react'
 import Card from '../../shared/ui/Card'
 import Button from '../../shared/ui/Button'
 import { IconPlus, IconGoals } from '../../shared/ui/icons'
 import {
-  mockMainGoal,
   mockGoals,
   mockGoalTips,
   formatMoneyPlain,
   type Goal
 } from '../../shared/lib/mocks'
+import GoalCreateForm, {
+  type GoalCreateFormValues
+} from './components/GoalCreateForm'
 import './goals.css'
 
 type ProgressVariant = 'default' | 'light'
+type GoalStatus = 'not-started' | 'in-progress' | 'almost-done' | 'done'
 
 function ProgressBar({
   percent,
@@ -29,22 +33,69 @@ function ProgressBar({
   )
 }
 
+function getGoalStatus(percent: number): { label: string; key: GoalStatus } {
+  if (percent <= 0) {
+    return { label: 'Не начато', key: 'not-started' }
+  }
+
+  if (percent >= 100) {
+    return { label: 'Выполнено', key: 'done' }
+  }
+
+  if (percent >= 80) {
+    return { label: 'Почти готово', key: 'almost-done' }
+  }
+
+  return { label: 'В процессе', key: 'in-progress' }
+}
+
+function getGoalEmoji(title: string) {
+  const value = title.toLowerCase()
+
+  if (value.includes('дом') || value.includes('квар')) return '🏠'
+  if (value.includes('машин') || value.includes('авто')) return '🚗'
+  if (
+    value.includes('итал') ||
+    value.includes('дубай') ||
+    value.includes('китай') ||
+    value.includes('отпуск') ||
+    value.includes('путеш')
+  ) {
+    return '🏖️'
+  }
+  if (
+    value.includes('образ') ||
+    value.includes('учеб') ||
+    value.includes('курс')
+  ) {
+    return '🎓'
+  }
+  if (value.includes('ремонт')) return '🛠️'
+  if (value.includes('ноут')) return '💻'
+  if (value.includes('телефон')) return '📱'
+  if (value.includes('свад')) return '💍'
+
+  return '🎯'
+}
+
 function GoalCard({ goal }: { goal: Goal }) {
-  const initials = goal.title
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
+  const status = getGoalStatus(goal.percent)
 
   return (
     <div className="goal-card">
       <div className="goal-card__header">
-        <div className="goal-card__icon">{initials}</div>
+        <div className="goal-card__emoji" role="img" aria-label={goal.title}>
+          {getGoalEmoji(goal.title)}
+        </div>
+
         <div className="goal-card__main">
-          <div className="goal-card__title">{goal.title}</div>
+          <div className="goal-card__title-row">
+            <div className="goal-card__title">{goal.title}</div>
+            {goal.isMain && <span className="goal-card__badge">Главная</span>}
+          </div>
           <div className="goal-card__deadline">{goal.deadline}</div>
         </div>
+
         <div className="goal-card__percent">{goal.percent}%</div>
       </div>
 
@@ -55,6 +106,12 @@ function GoalCard({ goal }: { goal: Goal }) {
         <span>{formatMoneyPlain(goal.target)}</span>
       </div>
 
+      <div className="goal-card__status">
+        <span className={`goal-status goal-status--${status.key}`}>
+          {status.label}
+        </span>
+      </div>
+
       <div className="goal-card__stats">
         <div className="goal-stat">
           <div className="goal-stat__label">Ежемесячно</div>
@@ -62,6 +119,7 @@ function GoalCard({ goal }: { goal: Goal }) {
             {formatMoneyPlain(goal.monthly)}
           </div>
         </div>
+
         <div className="goal-stat">
           <div className="goal-stat__label">Осталось</div>
           <div className="goal-stat__value">
@@ -73,66 +131,223 @@ function GoalCard({ goal }: { goal: Goal }) {
   )
 }
 
+function getMonthsLeft(
+  target: number,
+  collected: number,
+  monthly: number
+): number | null {
+  const remaining = Math.max(target - collected, 0)
+
+  if (remaining === 0) return 0
+  if (monthly <= 0) return null
+
+  return Math.ceil(remaining / monthly)
+}
+
 export default function GoalsPage() {
-  const g = mockMainGoal
+  const [goals, setGoals] = useState<Goal[]>(mockGoals)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+
+  const totalGoals = useMemo(() => goals.length, [goals])
+
+  const mainGoal = useMemo(() => {
+    return goals.find((goal) => goal.isMain) || goals[0]
+  }, [goals])
+
+  const handleCloseCreate = () => {
+    setIsCreateOpen(false)
+  }
+
+  const handleCreateGoal = (data: GoalCreateFormValues) => {
+    const collected = Number(data.collected)
+    const target = Number(data.target)
+    const monthly = Number(data.monthly)
+
+    if (
+      Number.isNaN(collected) ||
+      Number.isNaN(target) ||
+      Number.isNaN(monthly)
+    ) {
+      return
+    }
+
+    if (target <= 0 || collected < 0 || monthly < 0 || collected > target) {
+      return
+    }
+
+    const remaining = Math.max(target - collected, 0)
+    const percent = Math.min(100, Math.round((collected / target) * 100))
+
+    const newGoal: Goal = {
+      id: Date.now(),
+      title: data.title.trim(),
+      deadline: data.deadline.trim(),
+      collected,
+      target,
+      monthly,
+      remaining,
+      percent,
+      isMain: data.isMain
+    }
+
+    setGoals((prev) => {
+      if (newGoal.isMain) {
+        return [newGoal, ...prev.map((goal) => ({ ...goal, isMain: false }))]
+      }
+
+      return [newGoal, ...prev]
+    })
+
+    setIsCreateOpen(false)
+  }
+
+  if (!mainGoal) {
+    return (
+      <div className="goals">
+        <div className="goals__header">
+          <h1 className="goals__title">Цели</h1>
+
+          <Button
+            type="button"
+            onClick={() => setIsCreateOpen((prev) => !prev)}
+          >
+            {isCreateOpen ? (
+              <span className="goals__toggle-icon" aria-hidden="true">
+                ✕
+              </span>
+            ) : (
+              <IconPlus width={16} height={16} />
+            )}
+
+            <span style={{ marginLeft: 6 }}>
+              {isCreateOpen ? 'Закрыть' : 'Добавить цель'}
+            </span>
+          </Button>
+        </div>
+
+        {isCreateOpen && (
+          <GoalCreateForm
+            onSubmitForm={handleCreateGoal}
+            onCancel={handleCloseCreate}
+          />
+        )}
+
+        <Card title="Цели">
+          <p className="goals__empty">Пока нет целей. Добавьте первую цель.</p>
+        </Card>
+      </div>
+    )
+  }
+
+  const monthsLeft = getMonthsLeft(
+    mainGoal.target,
+    mainGoal.collected,
+    mainGoal.monthly
+  )
+  const mainStatus = getGoalStatus(mainGoal.percent)
 
   return (
     <div className="goals">
       <div className="goals__header">
         <h1 className="goals__title">Цели</h1>
-        <Button>
-          <IconPlus width={16} height={16} />
-          <span style={{ marginLeft: 6 }}>Добавить цель</span>
+
+        <Button type="button" onClick={() => setIsCreateOpen((prev) => !prev)}>
+          {isCreateOpen ? (
+            <span className="goals__toggle-icon" aria-hidden="true">
+              ✕
+            </span>
+          ) : (
+            <IconPlus width={16} height={16} />
+          )}
+
+          <span style={{ marginLeft: 6 }}>
+            {isCreateOpen ? 'Закрыть' : 'Добавить цель'}
+          </span>
         </Button>
       </div>
+
+      {isCreateOpen && (
+        <GoalCreateForm
+          onSubmitForm={handleCreateGoal}
+          onCancel={handleCloseCreate}
+        />
+      )}
 
       <div className="main-goal">
         <div className="main-goal__row">
           <div>
-            <div className="main-goal__label">{g.label}</div>
-            <div className="main-goal__title">{g.title}</div>
+            <div className="main-goal__label">Главная цель</div>
+
+            <div className="main-goal__title-row">
+              <span
+                className="main-goal__emoji"
+                role="img"
+                aria-label={mainGoal.title}
+              >
+                {getGoalEmoji(mainGoal.title)}
+              </span>
+              <div className="main-goal__title">{mainGoal.title}</div>
+            </div>
+
             <div className="main-goal__meta">
-              <span>📅 {g.deadline}</span>
-              <span>{formatMoneyPlain(g.monthly)}/мес</span>
+              <span>📅 {mainGoal.deadline}</span>
+              <span>{formatMoneyPlain(mainGoal.monthly)}/мес</span>
             </div>
           </div>
+
           <div className="main-goal__percent">
-            <div className="main-goal__percent-value">{g.percent}%</div>
+            <div className="main-goal__percent-value">{mainGoal.percent}%</div>
             <div className="main-goal__percent-hint">достигнуто</div>
           </div>
         </div>
 
         <div className="main-goal__progress">
           <div className="main-goal__progress-top">
-            <span>{formatMoneyPlain(g.collected)}</span>
-            <span>{formatMoneyPlain(g.target)}</span>
+            <span>{formatMoneyPlain(mainGoal.collected)}</span>
+            <span>{formatMoneyPlain(mainGoal.target)}</span>
           </div>
-          <ProgressBar percent={g.percent} variant="light" />
+          <ProgressBar percent={mainGoal.percent} variant="light" />
+        </div>
+
+        <div className="main-goal__status">
+          <span
+            className={`goal-status goal-status--${mainStatus.key} goal-status--light`}
+          >
+            {mainStatus.label}
+          </span>
         </div>
 
         <div className="main-goal__stats">
           <div className="main-goal__stat">
             <div className="main-goal__stat-label">Осталось</div>
             <div className="main-goal__stat-value">
-              {formatMoneyPlain(g.remaining)}
+              {formatMoneyPlain(mainGoal.remaining)}
             </div>
           </div>
+
           <div className="main-goal__stat">
             <div className="main-goal__stat-label">Ещё месяцев</div>
-            <div className="main-goal__stat-value">{g.monthsLeft}</div>
+            <div className="main-goal__stat-value">
+              {monthsLeft === null ? '—' : monthsLeft}
+            </div>
           </div>
+
           <div className="main-goal__stat">
             <div className="main-goal__stat-label">Прогресс</div>
             <div className="main-goal__stat-value main-goal__stat-value--icon">
-              <IconGoals width={20} height={20} /> в пути
+              <IconGoals width={20} height={20} /> {mainStatus.label.toLowerCase()}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="goals__section-title">Все цели</div>
+      <div className="goals__section-head">
+        <div className="goals__section-title">Все цели</div>
+        <div className="goals__count">Всего: {totalGoals}</div>
+      </div>
+
       <div className="goals__grid">
-        {mockGoals.map((goal) => (
+        {goals.map((goal) => (
           <GoalCard key={goal.id} goal={goal} />
         ))}
       </div>

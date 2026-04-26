@@ -1,10 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import Card from '../../shared/ui/Card'
 import Button from '../../shared/ui/Button'
 import Input from '../../shared/ui/Input'
 import {
-  mockUser,
-  mockPartner,
   mockSettings,
   type SplitType,
   type NotificationSettings
@@ -52,169 +51,391 @@ function Toggle({ checked, onChange }: ToggleProps) {
   )
 }
 
-interface ProfileForm {
-  email: string
-  income: number | string
+interface SettingsFormValues {
+  partnerAEmail: string
+  partnerAIncome: string
+  partnerBEmail: string
+  partnerBIncome: string
+  splitType: SplitType
+  currency: 'RUB' | 'USD' | 'EUR'
+  notifications: NotificationSettings
+}
+
+function generateInviteCode() {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  const bytes = new Uint8Array(6)
+  crypto.getRandomValues(bytes)
+
+  const value = Array.from(bytes, (byte) => {
+    return alphabet[byte % alphabet.length]
+  }).join('')
+
+  return `FINPAIR-${value}`
 }
 
 export default function SettingsPage() {
-  const [split, setSplit] = useState<SplitType>(mockSettings.splitType)
-  const [notifs, setNotifs] = useState<NotificationSettings>(
-    mockSettings.notifications
-  )
   const [copied, setCopied] = useState(false)
-  const [profileA, setProfileA] = useState<ProfileForm>({
-    email: mockUser.email,
-    income: mockUser.income
-  })
-  const [profileB, setProfileB] = useState<ProfileForm>({
-    email: mockPartner.email,
-    income: mockPartner.income
+  const [inviteCode, setInviteCode] = useState(mockSettings.inviteCode)
+  const inviteBlockRef = useRef<HTMLDivElement | null>(null)
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting }
+  } = useForm<SettingsFormValues>({
+    defaultValues: {
+      partnerAEmail: '',
+      partnerAIncome: '',
+      partnerBEmail: '',
+      partnerBIncome: '',
+      splitType: mockSettings.splitType,
+      currency: mockSettings.currency,
+      notifications: {
+        newTransactions: mockSettings.notifications.newTransactions,
+        goalsProgress: mockSettings.notifications.goalsProgress,
+        monthlyReports: mockSettings.notifications.monthlyReports
+      }
+    },
+    mode: 'onBlur'
   })
 
-  const handleCopy = () => {
-    navigator.clipboard?.writeText(mockSettings.inviteCode)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+  useEffect(() => {
+    const node = inviteBlockRef.current
+    if (!node) return
+
+    let wasVisible = false
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !wasVisible) {
+          setInviteCode(generateInviteCode())
+          setCopied(false)
+          wasVisible = true
+        }
+
+        if (!entry.isIntersecting) {
+          wasVisible = false
+        }
+      },
+      {
+        threshold: 0.65
+      }
+    )
+
+    observer.observe(node)
+
+    return () => observer.disconnect()
+  }, [])
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteCode)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  const onSubmit = (data: SettingsFormValues) => {
+    const partnerAIncome = Number(data.partnerAIncome.trim())
+    const partnerBIncome = Number(data.partnerBIncome.trim())
+
+    const payload = {
+      ...data,
+      partnerAIncome,
+      partnerBIncome,
+      inviteCode
+    }
+
+    console.log('settings submit', payload)
   }
 
   return (
     <div className="settings">
       <h1 className="settings__title">Настройки</h1>
 
-      <Card title="Профили партнёров">
-        <div className="profiles">
-          <div className="profile">
-            <div className="profile__head">
-              <div className="profile__avatar">А</div>
-              <div>
-                <div className="profile__name">Партнёр А</div>
-                <div className="profile__sub">Основной аккаунт</div>
+      <form onSubmit={handleSubmit(onSubmit)} className="settings__form">
+        <Card title="Профили партнёров">
+          <div className="profiles">
+            <div className="profile">
+              <div className="profile__head">
+                <div className="profile__avatar">А</div>
+                <div>
+                  <div className="profile__name">Партнёр А</div>
+                  <div className="profile__sub">Основной аккаунт</div>
+                </div>
+              </div>
+
+              <div className="profile__fields">
+                <div>
+                  <Controller
+                    name="partnerAEmail"
+                    control={control}
+                    rules={{
+                      required: 'Введите email партнёра А',
+                      validate: (value) => {
+                        const trimmed = value.trim()
+
+                        if (!trimmed) return 'Введите email партнёра А'
+                        if (!trimmed.includes('@')) {
+                          return 'Email должен содержать символ @'
+                        }
+
+                        const emailRegex =
+                          /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
+
+                        if (!emailRegex.test(trimmed)) {
+                          return 'Введите корректный email'
+                        }
+
+                        return true
+                      }
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        id="a-email"
+                        label="Email"
+                        type="email"
+                        placeholder="Например, partner@finpair.ru"
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
+                  {errors.partnerAEmail && (
+                    <p className="settings__error">{errors.partnerAEmail.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Controller
+                    name="partnerAIncome"
+                    control={control}
+                    rules={{
+                      required: 'Введите доход партнёра А',
+                      validate: (value) => {
+                        const trimmed = value.trim()
+
+                        if (!trimmed) return 'Введите доход партнёра А'
+
+                        const num = Number(trimmed)
+
+                        if (Number.isNaN(num)) return 'Введите число'
+                        if (num <= 0) return 'Сумма должна быть больше 0'
+
+                        return true
+                      }
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        id="a-income"
+                        label="Месячный доход"
+                        type="number"
+                        placeholder="Например, 200000"
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                      />
+                    )}
+                  />
+                  {errors.partnerAIncome && (
+                    <p className="settings__error">{errors.partnerAIncome.message}</p>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="profile__fields">
-              <Input
-                id="a-email"
-                label="Email"
-                type="email"
-                value={profileA.email}
-                onChange={(e) =>
-                  setProfileA({ ...profileA, email: e.target.value })
-                }
-              />
-              <Input
-                id="a-income"
-                label="Месячный доход"
-                value={profileA.income}
-                onChange={(e) =>
-                  setProfileA({ ...profileA, income: e.target.value })
-                }
-              />
-            </div>
-          </div>
 
-          <div className="profile">
-            <div className="profile__head">
-              <div className="profile__avatar profile__avatar--b">Б</div>
-              <div>
-                <div className="profile__name">Партнёр Б</div>
-                <div className="profile__sub">Второй аккаунт</div>
+            <div className="profile">
+              <div className="profile__head">
+                <div className="profile__avatar profile__avatar--b">Б</div>
+                <div>
+                  <div className="profile__name">Партнёр Б</div>
+                  <div className="profile__sub">Второй аккаунт</div>
+                </div>
+              </div>
+
+              <div className="profile__fields">
+                <div>
+                  <Controller
+                    name="partnerBEmail"
+                    control={control}
+                    rules={{
+                      required: 'Введите email партнёра Б',
+                      validate: (value) => {
+                        const trimmed = value.trim()
+
+                        if (!trimmed) return 'Введите email партнёра Б'
+                        if (!trimmed.includes('@')) {
+                          return 'Email должен содержать символ @'
+                        }
+
+                        const emailRegex =
+                          /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
+
+                        if (!emailRegex.test(trimmed)) {
+                          return 'Введите корректный email'
+                        }
+
+                        return true
+                      }
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        id="b-email"
+                        label="Email"
+                        type="email"
+                        placeholder="Например, partner-b@finpair.ru"
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
+                  {errors.partnerBEmail && (
+                    <p className="settings__error">{errors.partnerBEmail.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Controller
+                    name="partnerBIncome"
+                    control={control}
+                    rules={{
+                      required: 'Введите доход партнёра Б',
+                      validate: (value) => {
+                        const trimmed = value.trim()
+
+                        if (!trimmed) return 'Введите доход партнёра Б'
+
+                        const num = Number(trimmed)
+
+                        if (Number.isNaN(num)) return 'Введите число'
+                        if (num <= 0) return 'Сумма должна быть больше 0'
+
+                        return true
+                      }
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        id="b-income"
+                        label="Месячный доход"
+                        type="number"
+                        placeholder="Например, 150000"
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                      />
+                    )}
+                  />
+                  {errors.partnerBIncome && (
+                    <p className="settings__error">{errors.partnerBIncome.message}</p>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="profile__fields">
-              <Input
-                id="b-email"
-                label="Email"
-                type="email"
-                value={profileB.email}
-                onChange={(e) =>
-                  setProfileB({ ...profileB, email: e.target.value })
-                }
+          </div>
+        </Card>
+
+        <Card title="Способ деления расходов">
+          <Controller
+            name="splitType"
+            control={control}
+            render={({ field }) => (
+              <div className="split">
+                {SPLITS.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => field.onChange(s.id)}
+                    className={
+                      'split__btn' + (field.value === s.id ? ' split__btn--active' : '')
+                    }
+                  >
+                    <span className="split__icon">{s.icon}</span>
+                    <span className="split__title">{s.title}</span>
+                    <span className="split__hint">{s.hint}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          />
+        </Card>
+
+        <div ref={inviteBlockRef}>
+          <Card title="Код приглашения">
+            <p className="invite__desc">
+              Поделитесь этим кодом с партнёром для подключения к вашему аккаунту
+            </p>
+            <div className="invite">
+              <div className="invite__code">{inviteCode}</div>
+              <Button type="button" variant="primary" onClick={handleCopy}>
+                {copied ? 'Скопировано' : 'Копировать'}
+              </Button>
+            </div>
+          </Card>
+        </div>
+
+        <div className="settings__two-col">
+          <Card title="💱 Валюта">
+            <Controller
+              name="currency"
+              control={control}
+              render={({ field }) => (
+                <select
+                  className="select"
+                  value={field.value}
+                  onChange={field.onChange}
+                >
+                  <option value="RUB">₽ Российский рубль</option>
+                  <option value="USD">$ Доллар США</option>
+                  <option value="EUR">€ Евро</option>
+                </select>
+              )}
+            />
+          </Card>
+
+          <Card title="🔔 Уведомления">
+            <div className="notifs">
+              <Controller
+                name="notifications.newTransactions"
+                control={control}
+                render={({ field }) => (
+                  <label className="notifs__row">
+                    <span>Новые транзакции</span>
+                    <Toggle checked={field.value} onChange={field.onChange} />
+                  </label>
+                )}
               />
-              <Input
-                id="b-income"
-                label="Месячный доход"
-                value={profileB.income}
-                onChange={(e) =>
-                  setProfileB({ ...profileB, income: e.target.value })
-                }
+
+              <Controller
+                name="notifications.goalsProgress"
+                control={control}
+                render={({ field }) => (
+                  <label className="notifs__row">
+                    <span>Прогресс целей</span>
+                    <Toggle checked={field.value} onChange={field.onChange} />
+                  </label>
+                )}
+              />
+
+              <Controller
+                name="notifications.monthlyReports"
+                control={control}
+                render={({ field }) => (
+                  <label className="notifs__row">
+                    <span>Месячные отчёты</span>
+                    <Toggle checked={field.value} onChange={field.onChange} />
+                  </label>
+                )}
               />
             </div>
-          </div>
+          </Card>
         </div>
-      </Card>
 
-      <Card title="Способ деления расходов">
-        <div className="split">
-          {SPLITS.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setSplit(s.id)}
-              className={
-                'split__btn' + (split === s.id ? ' split__btn--active' : '')
-              }
-            >
-              <span className="split__icon">{s.icon}</span>
-              <span className="split__title">{s.title}</span>
-              <span className="split__hint">{s.hint}</span>
-            </button>
-          ))}
-        </div>
-        <div className="split__note">{mockSettings.splitNote}</div>
-      </Card>
-
-      <Card title="Код приглашения">
-        <p className="invite__desc">
-          Поделитесь этим кодом с партнёром для подключения к вашему аккаунту
-        </p>
-        <div className="invite">
-          <div className="invite__code">{mockSettings.inviteCode}</div>
-          <Button variant="primary" onClick={handleCopy}>
-            {copied ? 'Скопировано' : 'Копировать'}
+        <div className="settings__actions">
+          <Button type="submit" variant="primary" disabled={isSubmitting}>
+            {isSubmitting ? 'Сохранение...' : 'Сохранить'}
           </Button>
         </div>
-      </Card>
-
-      <div className="settings__two-col">
-        <Card title="💱 Валюта">
-          <select className="select">
-            <option>₽ Российский рубль</option>
-            <option>$ Доллар США</option>
-            <option>€ Евро</option>
-          </select>
-        </Card>
-
-        <Card title="🔔 Уведомления">
-          <div className="notifs">
-            <label className="notifs__row">
-              <span>Новые транзакции</span>
-              <Toggle
-                checked={notifs.newTransactions}
-                onChange={(v) => setNotifs({ ...notifs, newTransactions: v })}
-              />
-            </label>
-            <label className="notifs__row">
-              <span>Прогресс целей</span>
-              <Toggle
-                checked={notifs.goalsProgress}
-                onChange={(v) => setNotifs({ ...notifs, goalsProgress: v })}
-              />
-            </label>
-            <label className="notifs__row">
-              <span>Месячные отчёты</span>
-              <Toggle
-                checked={notifs.monthlyReports}
-                onChange={(v) => setNotifs({ ...notifs, monthlyReports: v })}
-              />
-            </label>
-          </div>
-        </Card>
-      </div>
-
-      <div className="settings__actions">
-        <Button variant="primary">Сохранить</Button>
-      </div>
+      </form>
     </div>
   )
 }

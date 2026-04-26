@@ -43,3 +43,21 @@
   color: var(--color-primary);
   font-weight: 400;
 }
+
+.auth-form__common-error {
+  padding: 10px 12px;
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  border-radius: 10px;
+  background: rgba(220, 38, 38, 0.08);
+  font-size: 14px;
+  line-height: 20px;
+  color: #dc2626;
+}
+
+.auth-form__error {
+  margin-top: -10px;
+  margin-bottom: 2px;
+  font-size: 13px;
+  line-height: 18px;
+  color: #dc2626;
+}

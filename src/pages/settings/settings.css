@@ -11,6 +11,12 @@
   color: var(--color-text);
 }
 
+.settings__form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .profiles {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -125,15 +131,6 @@
   text-align: center;
 }
 
-.split__note {
-  margin-top: 14px;
-  padding: 14px 16px;
-  background: rgba(99, 102, 241, 0.08);
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  color: var(--color-text-secondary);
-}
-
 .invite__desc {
   font-size: 14px;
   color: var(--color-text-muted);
@@ -244,4 +241,23 @@
 .settings__actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.settings input,
+.settings .input__field {
+  color: var(--color-text);
+}
+
+.settings input::placeholder,
+.settings .input__field::placeholder {
+  color: var(--color-text-muted);
+  -webkit-text-fill-color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.settings__error {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  color: #dc2626;
 }
