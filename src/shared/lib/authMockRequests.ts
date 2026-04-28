@@ -1,26 +1,17 @@
 import { delay } from './asyncUtils'
-import { mockUser } from './mocks'
+import { mockPartner, mockUser } from './mocks'
 
 /** Задержка «сети» при входе/регистрации (мс). 0 — мгновенно. */
-const AUTH_DELAY_MS = 0
-
-/** Текст для блока быстрого доступа на странице входа */
-export const LOGIN_ACCESS_REFERENCE = `Доступ к аккаунтам:
-• ${mockUser.email} — пароль Demo-finpair-24
-• maria.volkova@yandex.ru — пароль Demo-finpair-24`
-
-/** Подсказка под формой регистрации */
-export const REGISTER_INFO_TEXT =
-  'После регистрации можно пригласить партнёра по коду из настроек. Профиль создаётся сразу после отправки формы.'
+const AUTH_DELAY_MS = 420
 
 const MOCK_PASSWORD_BY_EMAIL: Record<string, string> = {
   [mockUser.email.toLowerCase()]: 'Demo-finpair-24',
-  'maria.volkova@yandex.ru': 'Demo-finpair-24'
+  [mockPartner.email.toLowerCase()]: 'Demo-finpair-24'
 }
 
 const MOCK_DISPLAY_NAME_BY_EMAIL: Record<string, string> = {
   [mockUser.email.toLowerCase()]: mockUser.name,
-  'maria.volkova@yandex.ru': 'Мария Волкова'
+  [mockPartner.email.toLowerCase()]: mockPartner.name
 }
 
 export interface MockAuthUser {

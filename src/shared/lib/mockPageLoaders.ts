@@ -17,7 +17,7 @@ import {
 } from './mocks'
 
 /** Задержка загрузки страниц (мс). 0 — без ожидания. */
-const MOCK_PAGE_DELAY_MS = 0
+const MOCK_PAGE_DELAY_MS = 420
 
 function shouldSimulatePageLoadFailure(): boolean {
   return import.meta.env.VITE_SIMULATE_PAGE_ERROR === 'true'

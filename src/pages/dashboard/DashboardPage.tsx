@@ -1,6 +1,10 @@
 import Card from '../../shared/ui/Card'
 import { IconBulb } from '../../shared/ui/icons'
-import { formatMoneyPlain } from '../../shared/lib/mocks'
+import {
+  formatMoneyPlain,
+  partnerAShortName,
+  partnerBShortName
+} from '../../shared/lib/mocks'
 import { useAsyncData } from '../../shared/hooks/useAsyncData'
 import { loadDashboardPageData } from '../../shared/lib/mockPageLoaders'
 import type { DashboardPageData } from '../../shared/lib/mockPageLoaders'
@@ -65,14 +69,14 @@ function DashboardContent({ data }: { data: DashboardPageData }) {
                   className="dashboard__dot"
                   style={{ background: '#6366f1' }}
                 />
-                Партнёр А: {partnerSplit.a}%
+                {partnerAShortName}: {partnerSplit.a}%
               </span>
               <span className="dashboard__legend-item">
                 <span
                   className="dashboard__dot"
                   style={{ background: '#a78bfa' }}
                 />
-                Партнёр Б: {partnerSplit.b}%
+                {partnerBShortName}: {partnerSplit.b}%
               </span>
             </div>
           </div>

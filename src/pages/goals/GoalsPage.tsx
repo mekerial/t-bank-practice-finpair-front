@@ -1,13 +1,20 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Card from '../../shared/ui/Card'
 import Button from '../../shared/ui/Button'
+import AsyncDataView from '../../shared/ui/AsyncDataView'
 import { IconPlus, IconGoals } from '../../shared/ui/icons'
 import {
-  mockGoals,
   mockGoalTips,
   formatMoneyPlain,
   type Goal
 } from '../../shared/lib/mocks'
+import {
+  clearCreateGoalError,
+  createGoal,
+  fetchGoals,
+  useAppDispatch,
+  useAppSelector
+} from '../../app/store'
 import GoalCreateForm, {
   type GoalCreateFormValues
 } from './components/GoalCreateForm'
@@ -145,8 +152,15 @@ function getMonthsLeft(
 }
 
 export default function GoalsPage() {
-  const [goals, setGoals] = useState<Goal[]>(mockGoals)
+  const dispatch = useAppDispatch()
+  const { items: goals, status, error, createError } = useAppSelector((s) => s.goals)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+
+  useEffect(() => {
+    if (status === 'idle') {
+      void dispatch(fetchGoals())
+    }
+  }, [dispatch, status])
 
   const totalGoals = useMemo(() => goals.length, [goals])
 
@@ -158,47 +172,12 @@ export default function GoalsPage() {
     setIsCreateOpen(false)
   }
 
-  const handleCreateGoal = (data: GoalCreateFormValues) => {
-    const collected = Number(data.collected)
-    const target = Number(data.target)
-    const monthly = Number(data.monthly)
-
-    if (
-      Number.isNaN(collected) ||
-      Number.isNaN(target) ||
-      Number.isNaN(monthly)
-    ) {
-      return
+  const handleCreateGoal = async (data: GoalCreateFormValues) => {
+    dispatch(clearCreateGoalError())
+    const result = await dispatch(createGoal(data))
+    if (createGoal.fulfilled.match(result)) {
+      setIsCreateOpen(false)
     }
-
-    if (target <= 0 || collected < 0 || monthly < 0 || collected > target) {
-      return
-    }
-
-    const remaining = Math.max(target - collected, 0)
-    const percent = Math.min(100, Math.round((collected / target) * 100))
-
-    const newGoal: Goal = {
-      id: Date.now(),
-      title: data.title.trim(),
-      deadline: data.deadline.trim(),
-      collected,
-      target,
-      monthly,
-      remaining,
-      percent,
-      isMain: data.isMain
-    }
-
-    setGoals((prev) => {
-      if (newGoal.isMain) {
-        return [newGoal, ...prev.map((goal) => ({ ...goal, isMain: false }))]
-      }
-
-      return [newGoal, ...prev]
-    })
-
-    setIsCreateOpen(false)
   }
 
   if (!mainGoal) {
@@ -266,6 +245,8 @@ export default function GoalsPage() {
         </Button>
       </div>
 
+      {createError && <p className="auth-form__common-error">{createError}</p>}
+
       {isCreateOpen && (
         <GoalCreateForm
           onSubmitForm={handleCreateGoal}
@@ -273,7 +254,19 @@ export default function GoalsPage() {
         />
       )}
 
-      <div className="main-goal">
+      <AsyncDataView
+        status={
+          status === 'loading'
+            ? 'loading'
+            : status === 'failed'
+              ? 'error'
+              : 'success'
+        }
+        error={error}
+        onRetry={() => void dispatch(fetchGoals())}
+        loadingLabel="Загружаем цели…"
+      >
+        <div className="main-goal">
         <div className="main-goal__row">
           <div>
             <div className="main-goal__label">Главная цель</div>
@@ -339,29 +332,30 @@ export default function GoalsPage() {
             </div>
           </div>
         </div>
-      </div>
+        </div>
 
-      <div className="goals__section-head">
-        <div className="goals__section-title">Все цели</div>
-        <div className="goals__count">Всего: {totalGoals}</div>
-      </div>
+        <div className="goals__section-head">
+          <div className="goals__section-title">Все цели</div>
+          <div className="goals__count">Всего: {totalGoals}</div>
+        </div>
 
-      <div className="goals__grid">
-        {goals.map((goal) => (
-          <GoalCard key={goal.id} goal={goal} />
-        ))}
-      </div>
-
-      <Card title="💡 Советы по накоплению">
-        <div className="goal-tips">
-          {mockGoalTips.map((t) => (
-            <div key={t.id} className="goal-tip">
-              <div className="goal-tip__title">{t.title}</div>
-              <div className="goal-tip__text">{t.text}</div>
-            </div>
+        <div className="goals__grid">
+          {goals.map((goal) => (
+            <GoalCard key={goal.id} goal={goal} />
           ))}
         </div>
-      </Card>
+
+        <Card title="💡 Советы по накоплению">
+          <div className="goal-tips">
+            {mockGoalTips.map((t) => (
+              <div key={t.id} className="goal-tip">
+                <div className="goal-tip__title">{t.title}</div>
+                <div className="goal-tip__text">{t.text}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </AsyncDataView>
     </div>
   )
 }

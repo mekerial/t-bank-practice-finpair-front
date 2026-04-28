@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Card from '../../shared/ui/Card'
 import Button from '../../shared/ui/Button'
+import AsyncDataView from '../../shared/ui/AsyncDataView'
 import {
   IconSearch,
   IconFilter,
@@ -9,18 +10,26 @@ import {
   IconChevronRight
 } from '../../shared/ui/icons'
 import {
-  mockTransactions,
-  mockTransactionsSummary,
   formatMoney,
-  formatMoneyPlain
+  formatMoneyPlain,
+  PAYER_ALEXEY,
+  PAYER_MARIA,
+  type PartnerLabel
 } from '../../shared/lib/mocks'
+import {
+  clearCreateTransactionError,
+  createTransaction,
+  fetchTransactions,
+  useAppDispatch,
+  useAppSelector
+} from '../../app/store'
 import AddTransactionForm, {
   type TransactionForm
 } from './components/AddTransactionForm'
 import './transactions.css'
 
 type TypeFilter = 'all' | 'income' | 'expense'
-type PayerFilter = 'all' | 'Партнёр А' | 'Партнёр Б'
+type PayerFilter = 'all' | PartnerLabel
 
 function CloseIcon({
   width = 16,
@@ -53,32 +62,25 @@ function CloseIcon({
   )
 }
 
-function formatTransactionDate(value: string) {
-  const date = new Date(value)
-
-  const parts = new Intl.DateTimeFormat('ru-RU', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  }).formatToParts(date)
-
-  const day = parts.find((part) => part.type === 'day')?.value ?? ''
-  const month = (parts.find((part) => part.type === 'month')?.value ?? '').replace('.', '')
-  const year = parts.find((part) => part.type === 'year')?.value ?? ''
-
-  return `${day} ${month} ${year}`
-}
-
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState(mockTransactions)
+  const dispatch = useAppDispatch()
+  const { items, summary, status, error, addError } = useAppSelector(
+    (s) => s.transactions
+  )
   const [search, setSearch] = useState('')
   const [type, setType] = useState<TypeFilter>('all')
   const [payer, setPayer] = useState<PayerFilter>('all')
   const [page, setPage] = useState(1)
   const [isAddOpen, setIsAddOpen] = useState(false)
 
+  useEffect(() => {
+    if (status === 'idle') {
+      void dispatch(fetchTransactions())
+    }
+  }, [dispatch, status])
+
   const filtered = useMemo(() => {
-    return transactions.filter((t) => {
+    return items.filter((t) => {
       if (
         search &&
         !t.category.toLowerCase().includes(search.toLowerCase())
@@ -92,25 +94,17 @@ export default function TransactionsPage() {
 
       return true
     })
-  }, [transactions, search, type, payer])
+  }, [items, search, type, payer])
 
-  const { income, expense, balance, balanceChangePercent, period } =
-    mockTransactionsSummary
+  const { income, expense, balance, balanceChangePercent, period } = summary
 
-  const handleAddTransaction = (data: TransactionForm) => {
-    const amountNumber = Number(data.amount.replace(',', '.').trim())
-
-    const newTransaction = {
-      id: Date.now(),
-      category: data.category.trim(),
-      payer: data.payer,
-      date: formatTransactionDate(data.date),
-      amount: data.type === 'income' ? amountNumber : -amountNumber
+  const handleAddTransaction = async (data: TransactionForm) => {
+    dispatch(clearCreateTransactionError())
+    const result = await dispatch(createTransaction(data))
+    if (createTransaction.fulfilled.match(result)) {
+      setPage(1)
+      setIsAddOpen(false)
     }
-
-    setTransactions((prev) => [newTransaction, ...prev])
-    setPage(1)
-    setIsAddOpen(false)
   }
 
   return (
@@ -137,6 +131,8 @@ export default function TransactionsPage() {
           </span>
         </Button>
       </div>
+
+      {addError && <p className="auth-form__common-error">{addError}</p>}
 
       {isAddOpen && (
         <AddTransactionForm
@@ -177,8 +173,8 @@ export default function TransactionsPage() {
             className="filter-input__control"
           >
             <option value="all">Все плательщики</option>
-            <option value="Партнёр А">Партнёр А</option>
-            <option value="Партнёр Б">Партнёр Б</option>
+            <option value={PAYER_ALEXEY}>{PAYER_ALEXEY}</option>
+            <option value={PAYER_MARIA}>{PAYER_MARIA}</option>
           </select>
         </div>
       </div>
@@ -211,75 +207,88 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <Card title="История операций">
-        <div className="tx-list">
-          {filtered.map((t) => {
-            const isIncome = t.amount > 0
-            const initials = t.category.slice(0, 2)
+      <AsyncDataView
+        status={
+          status === 'loading'
+            ? 'loading'
+            : status === 'failed'
+              ? 'error'
+              : 'success'
+        }
+        error={error}
+        onRetry={() => void dispatch(fetchTransactions())}
+        loadingLabel="Загружаем транзакции…"
+      >
+        <Card title="История операций">
+          <div className="tx-list">
+            {filtered.map((t) => {
+              const isIncome = t.amount > 0
+              const initials = t.category.slice(0, 2)
 
-            return (
-              <div key={t.id} className="tx-row">
-                <div className="tx-row__avatar">{initials}</div>
+              return (
+                <div key={t.id} className="tx-row">
+                  <div className="tx-row__avatar">{initials}</div>
 
-                <div className="tx-row__main">
-                  <div className="tx-row__top">
-                    <span className="tx-row__category">{t.category}</span>
-                    <span className="chip chip--partner">{t.payer}</span>
+                  <div className="tx-row__main">
+                    <div className="tx-row__top">
+                      <span className="tx-row__category">{t.category}</span>
+                      <span className="chip chip--partner">{t.payer}</span>
+                    </div>
+                    <div className="tx-row__date">{t.date}</div>
                   </div>
-                  <div className="tx-row__date">{t.date}</div>
+
+                  <div
+                    className={
+                      'tx-row__amount ' +
+                      (isIncome ? 'tx-row__amount--income' : '')
+                    }
+                  >
+                    {formatMoney(t.amount)}
+                  </div>
                 </div>
+              )
+            })}
 
-                <div
-                  className={
-                    'tx-row__amount ' +
-                    (isIncome ? 'tx-row__amount--income' : '')
-                  }
-                >
-                  {formatMoney(t.amount)}
-                </div>
-              </div>
-            )
-          })}
+            {filtered.length === 0 && (
+              <div className="tx-list__empty">Ничего не найдено</div>
+            )}
+          </div>
 
-          {filtered.length === 0 && (
-            <div className="tx-list__empty">Ничего не найдено</div>
-          )}
-        </div>
-
-        <div className="pagination">
-          <button
-            type="button"
-            className="pagination__btn"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            <IconChevronLeft width={14} height={14} />
-            Предыдущие
-          </button>
-
-          {[1, 2, 3, 4].map((n) => (
+          <div className="pagination">
             <button
               type="button"
-              key={n}
-              onClick={() => setPage(n)}
-              className={
-                'pagination__page' +
-                (page === n ? ' pagination__page--active' : '')
-              }
+              className="pagination__btn"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
-              {n}
+              <IconChevronLeft width={14} height={14} />
+              Предыдущие
             </button>
-          ))}
 
-          <button
-            type="button"
-            className="pagination__btn"
-            onClick={() => setPage((p) => Math.min(4, p + 1))}
-          >
-            Следующие
-            <IconChevronRight width={14} height={14} />
-          </button>
-        </div>
-      </Card>
+            {[1, 2, 3, 4].map((n) => (
+              <button
+                type="button"
+                key={n}
+                onClick={() => setPage(n)}
+                className={
+                  'pagination__page' +
+                  (page === n ? ' pagination__page--active' : '')
+                }
+              >
+                {n}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              className="pagination__btn"
+              onClick={() => setPage((p) => Math.min(4, p + 1))}
+            >
+              Следующие
+              <IconChevronRight width={14} height={14} />
+            </button>
+          </div>
+        </Card>
+      </AsyncDataView>
     </div>
   )
 }

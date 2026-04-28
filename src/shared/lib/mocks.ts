@@ -31,7 +31,11 @@ export interface MainExpense {
   fromBudget: number
 }
 
-export type PartnerLabel = 'Партнёр А' | 'Партнёр Б'
+/** Имена плательщиков в транзакциях (совпадают с профилями mockUser / mockPartner) */
+export const PAYER_ALEXEY = 'Алексей Морозов' as const
+export const PAYER_MARIA = 'Мария Волкова' as const
+
+export type PartnerLabel = typeof PAYER_ALEXEY | typeof PAYER_MARIA
 
 export interface Transaction {
   id: number
@@ -160,6 +164,12 @@ export const mockPartner: User = {
   subtitle: 'Совладелец счёта'
 }
 
+/** Короткие подписи в графиках (роль A = Алексей, B = Мария) */
+export const partnerAShortName =
+  mockUser.name.split(/\s+/)[0] ?? mockUser.name
+export const partnerBShortName =
+  mockPartner.name.split(/\s+/)[0] ?? mockPartner.name
+
 /** Сводка за текущий месяц: доходы обоих, фактические расходы, остаток */
 export const mockFinancialLoad: FinancialLoad = {
   totalIncome: 327000,
@@ -172,7 +182,7 @@ export const mockFinancialLoad: FinancialLoad = {
 export const mockRecommendations: Recommendation[] = [
   {
     id: 1,
-    text: 'Доля расходов Марии по «Авто» выше среднего: можно перенести часть платежей на общий бюджет или скорректировать цель «Новый автомобиль».'
+    text: 'Доля расходов Марии по «Авто» выше среднего: можно перенести часть платежей на общий бюджет или скорректировать цель «Семейный автомобиль».'
   },
   {
     id: 2,
@@ -240,105 +250,105 @@ export const mockTransactions: Transaction[] = [
     id: 1,
     category: 'Зарплата',
     date: '10 апр 2026',
-    payer: 'Партнёр А',
+    payer: PAYER_ALEXEY,
     amount: 185000
   },
   {
     id: 2,
     category: 'Зарплата',
     date: '8 апр 2026',
-    payer: 'Партнёр Б',
+    payer: PAYER_MARIA,
     amount: 142000
   },
   {
     id: 3,
     category: 'Ипотека',
     date: '5 апр 2026',
-    payer: 'Партнёр А',
+    payer: PAYER_ALEXEY,
     amount: -45200
   },
   {
     id: 4,
     category: 'Продукты',
     date: '12 апр 2026',
-    payer: 'Партнёр А',
+    payer: PAYER_ALEXEY,
     amount: -16800
   },
   {
     id: 5,
     category: 'Продукты',
     date: '9 апр 2026',
-    payer: 'Партнёр Б',
+    payer: PAYER_MARIA,
     amount: -14200
   },
   {
     id: 6,
     category: 'Детский сад',
     date: '7 апр 2026',
-    payer: 'Партнёр Б',
+    payer: PAYER_MARIA,
     amount: -18900
   },
   {
     id: 7,
     category: 'Коммунальные платежи',
     date: '6 апр 2026',
-    payer: 'Партнёр Б',
+    payer: PAYER_MARIA,
     amount: -11600
   },
   {
     id: 8,
     category: 'Авто: страховка',
     date: '4 апр 2026',
-    payer: 'Партнёр Б',
+    payer: PAYER_MARIA,
     amount: -8400
   },
   {
     id: 9,
     category: 'Бензин',
     date: '4 апр 2026',
-    payer: 'Партнёр Б',
+    payer: PAYER_MARIA,
     amount: -5200
   },
   {
     id: 10,
     category: 'Ресторан',
     date: '3 апр 2026',
-    payer: 'Партнёр Б',
+    payer: PAYER_MARIA,
     amount: -7600
   },
   {
     id: 11,
     category: 'Спортзал',
     date: '2 апр 2026',
-    payer: 'Партнёр А',
+    payer: PAYER_ALEXEY,
     amount: -4500
   },
   {
     id: 12,
     category: 'Аптека и здоровье',
     date: '1 апр 2026',
-    payer: 'Партнёр А',
+    payer: PAYER_ALEXEY,
     amount: -6200
   },
   {
     id: 13,
     category: 'Подписки и связь',
     date: '1 апр 2026',
-    payer: 'Партнёр А',
+    payer: PAYER_ALEXEY,
     amount: -2190
   },
   {
     id: 14,
     category: 'Перевод на накопления',
     date: '30 мар 2026',
-    payer: 'Партнёр А',
+    payer: PAYER_ALEXEY,
     amount: -35000
   },
   {
     id: 15,
     category: 'Кино и досуг',
     date: '29 мар 2026',
-    payer: 'Партнёр А',
+    payer: PAYER_ALEXEY,
     amount: -2800
   }
 ]
@@ -419,7 +429,7 @@ export const mockInsights: Insight[] = [
   {
     id: 2,
     title: 'Баланс вкладов',
-    text: 'По доле фактических трат ближе к доходу обоих партнёров распределение 57/43 — совпадает с выбранной схемой «по доходу».'
+    text: 'По доле фактических трат распределение Алексей / Мария — 57/43, как при делении «по доходу» (185 000 ₽ и 142 000 ₽).'
   },
   {
     id: 3,
@@ -506,8 +516,8 @@ export const mockGoalTips: GoalTip[] = [
 
 export const mockSettings: AppSettings = {
   profiles: {
-    a: { email: 'aleksey.morozov@yandex.ru', income: 185000 },
-    b: { email: 'maria.volkova@yandex.ru', income: 142000 }
+    a: { email: mockUser.email, income: mockUser.income },
+    b: { email: mockPartner.email, income: mockPartner.income }
   },
   splitType: 'by-income',
   splitNote:

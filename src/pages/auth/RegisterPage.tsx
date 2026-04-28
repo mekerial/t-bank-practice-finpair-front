@@ -1,7 +1,12 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { registerUser, useAppDispatch, useAppSelector } from '../../app/store'
+import {
+  clearAuthError,
+  registerUser,
+  useAppDispatch,
+  useAppSelector
+} from '../../app/store'
 import { ROUTES } from '../../shared/config/routes'
 import { getErrorMessage } from '../../shared/lib/asyncUtils'
 import Input from '../../shared/ui/Input'
@@ -18,14 +23,14 @@ interface RegisterForm {
 export default function RegisterPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
-  const user = useAppSelector((s) => s.auth.user)
+  const { user, status, error } = useAppSelector((s) => s.auth)
   const [formError, setFormError] = useState('')
 
   const {
     control,
     handleSubmit,
     watch,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting, isValid }
   } = useForm<RegisterForm>({
     defaultValues: {
       name: '',
@@ -33,13 +38,14 @@ export default function RegisterPage() {
       password: '',
       passwordConfirm: ''
     },
-    mode: 'onSubmit'
+    mode: 'onChange'
   })
 
   const passwordValue = watch('password')
 
   const onSubmit = async (data: RegisterForm) => {
     setFormError('')
+    dispatch(clearAuthError())
     try {
       await dispatch(
         registerUser({
@@ -59,6 +65,12 @@ export default function RegisterPage() {
   const onInvalid = () => {
     setFormError('Заполните все обязательные поля')
   }
+
+  useEffect(() => {
+    if (formError === 'Заполните все обязательные поля' && isValid) {
+      setFormError('')
+    }
+  }, [formError, isValid])
 
   if (user) {
     return <Navigate to={ROUTES.DASHBOARD} replace />
@@ -92,7 +104,9 @@ export default function RegisterPage() {
         onSubmit={handleSubmit(onSubmit, onInvalid)}
         noValidate
       >
-        {formError && <p className="auth-form__common-error">{formError}</p>}
+        {(error || formError) && (
+          <p className="auth-form__common-error">{error ?? formError}</p>
+        )}
 
         <Controller
           name="name"
@@ -193,8 +207,10 @@ export default function RegisterPage() {
           </p>
         )}
 
-        <Button type="submit" fullWidth disabled={isSubmitting}>
-          {isSubmitting ? 'Создаём аккаунт…' : 'Создать аккаунт'}
+        <Button type="submit" fullWidth disabled={isSubmitting || status === 'loading'}>
+          {isSubmitting || status === 'loading'
+            ? 'Создаём аккаунт…'
+            : 'Создать аккаунт'}
         </Button>
       </form>
 

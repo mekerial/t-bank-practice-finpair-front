@@ -4,7 +4,9 @@ import Card from '../../shared/ui/Card'
 import Button from '../../shared/ui/Button'
 import Input from '../../shared/ui/Input'
 import {
+  mockPartner,
   mockSettings,
+  mockUser,
   type SplitType,
   type NotificationSettings
 } from '../../shared/lib/mocks'
@@ -76,6 +78,8 @@ function generateInviteCode() {
 export default function SettingsPage() {
   const [copied, setCopied] = useState(false)
   const [inviteCode, setInviteCode] = useState(mockSettings.inviteCode)
+  const [submitError, setSubmitError] = useState('')
+  const formRef = useRef<HTMLFormElement | null>(null)
   const inviteBlockRef = useRef<HTMLDivElement | null>(null)
 
   const {
@@ -84,10 +88,10 @@ export default function SettingsPage() {
     formState: { errors, isSubmitting }
   } = useForm<SettingsFormValues>({
     defaultValues: {
-      partnerAEmail: '',
-      partnerAIncome: '',
-      partnerBEmail: '',
-      partnerBIncome: '',
+      partnerAEmail: mockSettings.profiles.a.email,
+      partnerAIncome: String(mockSettings.profiles.a.income),
+      partnerBEmail: mockSettings.profiles.b.email,
+      partnerBIncome: String(mockSettings.profiles.b.income),
       splitType: mockSettings.splitType,
       currency: mockSettings.currency,
       notifications: {
@@ -96,7 +100,8 @@ export default function SettingsPage() {
         monthlyReports: mockSettings.notifications.monthlyReports
       }
     },
-    mode: 'onBlur'
+    mode: 'onChange',
+    reValidateMode: 'onChange'
   })
 
   useEffect(() => {
@@ -138,6 +143,7 @@ export default function SettingsPage() {
   }
 
   const onSubmit = (data: SettingsFormValues) => {
+    setSubmitError('')
     const partnerAIncome = Number(data.partnerAIncome.trim())
     const partnerBIncome = Number(data.partnerBIncome.trim())
 
@@ -151,19 +157,45 @@ export default function SettingsPage() {
     console.log('settings submit', payload)
   }
 
+  const onInvalid = () => {
+    setSubmitError('Исправьте ошибки в форме и попробуйте снова')
+
+    const top = formRef.current?.offsetTop ?? 0
+    window.scrollTo({
+      top: Math.max(top - 16, 0),
+      behavior: 'smooth'
+    })
+  }
+
   return (
     <div className="settings">
       <h1 className="settings__title">Настройки</h1>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="settings__form">
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit(onSubmit, onInvalid)}
+        className="settings__form"
+      >
+        {submitError && (
+          <div className="settings__form-error" role="alert">
+            {submitError}
+          </div>
+        )}
+
         <Card title="Профили партнёров">
           <div className="profiles">
             <div className="profile">
               <div className="profile__head">
-                <div className="profile__avatar">А</div>
+                <div className="profile__avatar">
+                  {mockUser.name
+                    .split(/\s+/)
+                    .map((w) => w[0])
+                    .join('')
+                    .slice(0, 2)}
+                </div>
                 <div>
-                  <div className="profile__name">Партнёр А</div>
-                  <div className="profile__sub">Основной аккаунт</div>
+                  <div className="profile__name">{mockUser.name}</div>
+                  <div className="profile__sub">{mockUser.subtitle}</div>
                 </div>
               </div>
 
@@ -173,20 +205,20 @@ export default function SettingsPage() {
                     name="partnerAEmail"
                     control={control}
                     rules={{
-                      required: 'Введите email партнёра А',
+                      required: 'Заполните email корректно',
                       validate: (value) => {
                         const trimmed = value.trim()
 
-                        if (!trimmed) return 'Введите email партнёра А'
+                        if (!trimmed) return 'Заполните email корректно'
                         if (!trimmed.includes('@')) {
-                          return 'Email должен содержать символ @'
+                          return 'Заполните email корректно'
                         }
 
                         const emailRegex =
                           /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
 
                         if (!emailRegex.test(trimmed)) {
-                          return 'Введите корректный email'
+                          return 'Заполните email корректно'
                         }
 
                         return true
@@ -197,7 +229,7 @@ export default function SettingsPage() {
                         id="a-email"
                         label="Email"
                         type="email"
-                        placeholder="Например, maria.volkova@yandex.ru"
+                        placeholder={mockUser.email}
                         value={field.value}
                         onChange={field.onChange}
                       />
@@ -232,7 +264,7 @@ export default function SettingsPage() {
                         id="a-income"
                         label="Месячный доход"
                         type="number"
-                        placeholder="Например, 200000"
+                        placeholder={String(mockUser.income)}
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
                       />
@@ -247,10 +279,16 @@ export default function SettingsPage() {
 
             <div className="profile">
               <div className="profile__head">
-                <div className="profile__avatar profile__avatar--b">Б</div>
+                <div className="profile__avatar profile__avatar--b">
+                  {mockPartner.name
+                    .split(/\s+/)
+                    .map((w) => w[0])
+                    .join('')
+                    .slice(0, 2)}
+                </div>
                 <div>
-                  <div className="profile__name">Партнёр Б</div>
-                  <div className="profile__sub">Второй аккаунт</div>
+                  <div className="profile__name">{mockPartner.name}</div>
+                  <div className="profile__sub">{mockPartner.subtitle}</div>
                 </div>
               </div>
 
@@ -260,20 +298,20 @@ export default function SettingsPage() {
                     name="partnerBEmail"
                     control={control}
                     rules={{
-                      required: 'Введите email партнёра Б',
+                      required: 'Заполните email корректно',
                       validate: (value) => {
                         const trimmed = value.trim()
 
-                        if (!trimmed) return 'Введите email партнёра Б'
+                        if (!trimmed) return 'Заполните email корректно'
                         if (!trimmed.includes('@')) {
-                          return 'Email должен содержать символ @'
+                          return 'Заполните email корректно'
                         }
 
                         const emailRegex =
                           /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
 
                         if (!emailRegex.test(trimmed)) {
-                          return 'Введите корректный email'
+                          return 'Заполните email корректно'
                         }
 
                         return true
@@ -284,7 +322,7 @@ export default function SettingsPage() {
                         id="b-email"
                         label="Email"
                         type="email"
-                        placeholder="Например, partner-b@finpair.ru"
+                        placeholder={mockPartner.email}
                         value={field.value}
                         onChange={field.onChange}
                       />
@@ -319,7 +357,7 @@ export default function SettingsPage() {
                         id="b-income"
                         label="Месячный доход"
                         type="number"
-                        placeholder="Например, 150000"
+                        placeholder={String(mockPartner.income)}
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
                       />

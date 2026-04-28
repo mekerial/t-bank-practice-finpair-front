@@ -2,13 +2,18 @@ import { Controller, useForm, useWatch } from 'react-hook-form'
 import Card from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
 import Input from '../../../shared/ui/Input'
+import {
+  PAYER_ALEXEY,
+  PAYER_MARIA,
+  type PartnerLabel
+} from '../../../shared/lib/mocks'
 
 type TransactionType = 'income' | 'expense'
 
 export interface TransactionForm {
   category: string
   amount: string
-  payer: 'Партнёр А' | 'Партнёр Б'
+  payer: PartnerLabel
   type: TransactionType
   date: string
 }
@@ -42,6 +47,22 @@ const CATEGORY_OPTIONS: Record<TransactionType, string[]> = {
   ]
 }
 
+function ensureSelectOpensDown(target: HTMLSelectElement) {
+  const MIN_SPACE_BELOW_PX = 280
+  const rect = target.getBoundingClientRect()
+  const availableBelow = window.innerHeight - rect.bottom
+
+  if (availableBelow >= MIN_SPACE_BELOW_PX) {
+    return
+  }
+
+  const missingSpace = MIN_SPACE_BELOW_PX - availableBelow
+  window.scrollBy({
+    top: missingSpace + 12,
+    behavior: 'smooth'
+  })
+}
+
 interface AddTransactionFormProps {
   onSubmit: (data: TransactionForm) => void
   onCancel: () => void
@@ -66,7 +87,7 @@ export default function AddTransactionForm({
     defaultValues: {
       category: '',
       amount: '',
-      payer: 'Партнёр А',
+      payer: PAYER_ALEXEY,
       type: 'expense',
       date: ''
     }
@@ -152,8 +173,8 @@ export default function AddTransactionForm({
                   {...field}
                   aria-invalid={isSubmitted && errors.payer ? 'true' : 'false'}
                 >
-                  <option value="Партнёр А">Партнёр А</option>
-                  <option value="Партнёр Б">Партнёр Б</option>
+                  <option value={PAYER_ALEXEY}>{PAYER_ALEXEY}</option>
+                  <option value={PAYER_MARIA}>{PAYER_MARIA}</option>
                 </select>
               )}
             />
@@ -186,6 +207,12 @@ export default function AddTransactionForm({
                   aria-invalid={
                     isSubmitted && errors.category ? 'true' : 'false'
                   }
+                  onMouseDown={(event) => {
+                    ensureSelectOpensDown(event.currentTarget)
+                  }}
+                  onFocus={(event) => {
+                    ensureSelectOpensDown(event.currentTarget)
+                  }}
                 >
                   <option value="">Выберите категорию</option>
                   {currentCategories.map((category) => (

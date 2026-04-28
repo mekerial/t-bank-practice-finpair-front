@@ -1,7 +1,12 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { loginUser, useAppDispatch, useAppSelector } from '../../app/store'
+import {
+  clearAuthError,
+  loginUser,
+  useAppDispatch,
+  useAppSelector
+} from '../../app/store'
 import { ROUTES } from '../../shared/config/routes'
 import { getErrorMessage } from '../../shared/lib/asyncUtils'
 import Input from '../../shared/ui/Input'
@@ -16,23 +21,24 @@ interface LoginForm {
 export default function LoginPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
-  const user = useAppSelector((s) => s.auth.user)
+  const { user, status, error } = useAppSelector((s) => s.auth)
   const [formError, setFormError] = useState('')
 
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting, isValid }
   } = useForm<LoginForm>({
     defaultValues: {
       email: '',
       password: ''
     },
-    mode: 'onSubmit'
+    mode: 'onChange'
   })
 
   const onSubmit = async (data: LoginForm) => {
     setFormError('')
+    dispatch(clearAuthError())
     try {
       await dispatch(loginUser(data)).unwrap()
       navigate(ROUTES.DASHBOARD, { replace: true })
@@ -46,6 +52,12 @@ export default function LoginPage() {
   const onInvalid = () => {
     setFormError('Заполните все обязательные поля')
   }
+
+  useEffect(() => {
+    if (formError === 'Заполните все обязательные поля' && isValid) {
+      setFormError('')
+    }
+  }, [formError, isValid])
 
   if (user) {
     return <Navigate to={ROUTES.DASHBOARD} replace />
@@ -78,7 +90,9 @@ export default function LoginPage() {
         onSubmit={handleSubmit(onSubmit, onInvalid)}
         noValidate
       >
-        {formError && <p className="auth-form__common-error">{formError}</p>}
+        {(error || formError) && (
+          <p className="auth-form__common-error">{error ?? formError}</p>
+        )}
 
         <Controller
           name="email"
@@ -132,8 +146,8 @@ export default function LoginPage() {
           <p className="auth-form__error">{errors.password.message}</p>
         )}
 
-        <Button type="submit" fullWidth disabled={isSubmitting}>
-          {isSubmitting ? 'Входим…' : 'Войти'}
+        <Button type="submit" fullWidth disabled={isSubmitting || status === 'loading'}>
+          {isSubmitting || status === 'loading' ? 'Входим…' : 'Войти'}
         </Button>
       </form>
 

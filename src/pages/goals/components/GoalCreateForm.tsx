@@ -26,6 +26,8 @@ export default function GoalCreateForm({
     register,
     handleSubmit,
     reset,
+    setError,
+    clearErrors,
     formState: { errors, isSubmitting }
   } = useForm<GoalCreateFormValues>({
     defaultValues: {
@@ -43,9 +45,14 @@ export default function GoalCreateForm({
     const target = Number(data.target)
 
     if (!Number.isNaN(collected) && !Number.isNaN(target) && collected > target) {
+      setError('collected', {
+        type: 'validate',
+        message: 'Накоплено не может быть больше цели'
+      })
       return
     }
 
+    clearErrors('collected')
     onSubmitForm(data)
     reset()
   }

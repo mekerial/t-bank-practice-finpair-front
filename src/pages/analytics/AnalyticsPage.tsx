@@ -1,6 +1,8 @@
 import Card from '../../shared/ui/Card'
 import {
   formatMoneyPlain,
+  partnerAShortName,
+  partnerBShortName,
   type CategorySlice,
   type PartnerComparePoint
 } from '../../shared/lib/mocks'
@@ -116,10 +118,12 @@ function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
       
       <div className="bar-legend">
         <span>
-          <span className="bar-legend__dot" style={{ background: '#6366f1' }} /> Партнёр А
+          <span className="bar-legend__dot" style={{ background: '#6366f1' }} />{' '}
+          {partnerAShortName}
         </span>
         <span>
-          <span className="bar-legend__dot" style={{ background: '#a78bfa' }} /> Партнёр Б
+          <span className="bar-legend__dot" style={{ background: '#a78bfa' }} />{' '}
+          {partnerBShortName}
         </span>
       </div>
     </div>
@@ -321,14 +325,14 @@ function AnalyticsPageContent({ data }: { data: AnalyticsPageData }) {
                 className="bar-legend__dot"
                 style={{ background: '#6366f1' }}
               />{' '}
-              Партнёр А
+              {partnerAShortName}
             </span>
             <span>
               <span
                 className="bar-legend__dot"
                 style={{ background: '#a78bfa' }}
               />{' '}
-              Партнёр Б
+              {partnerBShortName}
             </span>
           </div>
         </Card>
