@@ -26,14 +26,29 @@ import {
 import AddTransactionForm, {
   type TransactionForm
 } from './components/AddTransactionForm'
+import SimpleSelect, {
+  type SimpleSelectOption
+} from '../../shared/ui/SimpleSelect'
 import './transactions.css'
 
 type TypeFilter = 'all' | 'income' | 'expense'
 type PayerFilter = 'all' | PartnerLabel
 
+const TYPE_FILTER_OPTIONS: SimpleSelectOption<TypeFilter>[] = [
+  { value: 'all', label: 'Все' },
+  { value: 'income', label: 'Доходы' },
+  { value: 'expense', label: 'Расходы' }
+]
+
+const PAYER_FILTER_OPTIONS: SimpleSelectOption<PayerFilter>[] = [
+  { value: 'all', label: 'Все плательщики' },
+  { value: PAYER_ALEXEY, label: PAYER_ALEXEY },
+  { value: PAYER_MARIA, label: PAYER_MARIA }
+]
+
 function CloseIcon({
-  width = 16,
-  height = 16
+  width = 20,
+  height = 20
 }: {
   width?: number
   height?: number
@@ -120,11 +135,7 @@ export default function TransactionsPage() {
             isAddOpen ? 'Скрыть форму добавления' : 'Открыть форму добавления'
           }
         >
-          {isAddOpen ? (
-            <CloseIcon width={16} height={16} />
-          ) : (
-            <IconPlus width={16} height={16} />
-          )}
+          {isAddOpen ? <CloseIcon /> : <IconPlus />}
 
           <span style={{ marginLeft: 6 }}>
             {isAddOpen ? 'Скрыть форму' : 'Добавить'}
@@ -143,7 +154,7 @@ export default function TransactionsPage() {
 
       <div className="transactions__filters">
         <div className="filter-input">
-          <IconSearch width={16} height={16} className="filter-input__icon" />
+          <IconSearch className="filter-input__icon" aria-hidden />
           <input
             type="text"
             placeholder="Поиск транзакций..."
@@ -154,28 +165,24 @@ export default function TransactionsPage() {
         </div>
 
         <div className="filter-input">
-          <IconFilter width={16} height={16} className="filter-input__icon" />
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as TypeFilter)}
+          <IconFilter className="filter-input__icon" aria-hidden />
+          <SimpleSelect<TypeFilter>
             className="filter-input__control"
-          >
-            <option value="all">Все</option>
-            <option value="income">Доходы</option>
-            <option value="expense">Расходы</option>
-          </select>
+            value={type}
+            onChange={setType}
+            options={TYPE_FILTER_OPTIONS}
+            aria-label="Тип операции"
+          />
         </div>
 
         <div className="filter-input">
-          <select
-            value={payer}
-            onChange={(e) => setPayer(e.target.value as PayerFilter)}
+          <SimpleSelect<PayerFilter>
             className="filter-input__control"
-          >
-            <option value="all">Все плательщики</option>
-            <option value={PAYER_ALEXEY}>{PAYER_ALEXEY}</option>
-            <option value={PAYER_MARIA}>{PAYER_MARIA}</option>
-          </select>
+            value={payer}
+            onChange={setPayer}
+            options={PAYER_FILTER_OPTIONS}
+            aria-label="Плательщик"
+          />
         </div>
       </div>
 

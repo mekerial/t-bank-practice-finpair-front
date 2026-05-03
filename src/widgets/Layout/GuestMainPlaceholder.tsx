@@ -33,12 +33,12 @@ export default function GuestMainPlaceholder() {
     <div className="guest-welcome">
       <div className="guest-welcome__hero">
         <div className="guest-welcome__hero-inner">
-          <span className="guest-welcome__badge">FinPair</span>
+          <span className="guest-welcome__badge">Предпросмотр</span>
           <h1 className="guest-welcome__headline">{sectionTitle}</h1>
           <p className="guest-welcome__lead">
-            Здесь отображаются все финансовые разделы вашего профиля: нагрузка,
-            транзакции, аналитика, цели и персональные настройки. Войдите в
-            аккаунт или создайте новый, чтобы открыть полный доступ.
+            Сейчас вы смотрите описание раздела «{sectionTitle}». После входа
+            этот экран заменится на ваши операции, отчёты и цели — пункты меню
+            слева останутся теми же.
           </p>
           <div className="guest-welcome__metrics" aria-label="Ключевые возможности">
             <span className="guest-welcome__metric">Обновление в реальном времени</span>
@@ -77,8 +77,8 @@ export default function GuestMainPlaceholder() {
 
       <div className="guest-welcome__footnote">
         <p>
-          После входа вы увидите раздел «{sectionTitle}» с полным содержимым.
-          Навигация слева доступна сразу — так удобнее ориентироваться в сервисе.
+          Навигация слева работает как в полной версии: можно заранее пройтись
+          по разделам. Данные и сохранение появятся только в аккаунте.
         </p>
       </div>
     </div>

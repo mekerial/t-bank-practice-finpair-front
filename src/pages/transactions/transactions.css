@@ -1,7 +1,7 @@
 .transactions {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .transactions__header {
@@ -12,9 +12,7 @@
 }
 
 .transactions__title {
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 32px;
+  font: var(--font-h1);
   color: var(--color-text);
 }
 
@@ -43,8 +41,14 @@
 }
 
 .filter-input__icon {
-  color: var(--color-text-muted);
+  width: 20px;
+  height: 20px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
   flex-shrink: 0;
+  color: var(--color-text-muted);
+  display: block;
 }
 
 .filter-input__control {
@@ -54,11 +58,10 @@
   border: none;
   background: transparent;
   outline: none;
-  font-family: inherit;
-  font-size: 14px;
+  font: var(--font-body);
   color: var(--color-text);
   box-sizing: border-box;
-  line-height: 1;
+  line-height: 24px;
 }
 
 .filter-input__control::placeholder {
@@ -86,8 +89,8 @@
 }
 
 .summary-card__label {
-  font-size: 14px;
-  color: var(--color-text-muted);
+  font: var(--font-h3);
+  color: var(--color-text);
   margin-bottom: 8px;
 }
 
@@ -107,13 +110,13 @@
 }
 
 .summary-card__hint {
-  margin-top: 6px;
-  font-size: 13px;
+  margin-top: 8px;
+  font: var(--font-body);
   color: var(--color-text-muted);
 }
 
 .summary-card__hint--accent {
-  color: var(--color-success);
+  color: var(--color-primary);
 }
 
 .tx-list {
@@ -143,7 +146,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--color-primary-10);
   color: var(--color-primary);
   display: flex;
   align-items: center;
@@ -165,19 +168,19 @@
 }
 
 .tx-row__category {
-  font-weight: 500;
-  font-size: 15px;
+  font: var(--font-body);
+  font-weight: 700;
   color: var(--color-text);
 }
 
 .tx-row__date {
-  font-size: 13px;
+  font: var(--font-body);
   color: var(--color-text-muted);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .tx-row__amount {
-  font-size: 15px;
+  font: var(--font-body);
   font-weight: 600;
   color: var(--color-text);
 }
@@ -202,7 +205,7 @@
   border: none;
   padding: 8px 12px;
   border-radius: 8px;
-  font-size: 14px;
+  font: var(--font-body);
   color: var(--color-text-secondary);
   display: inline-flex;
   align-items: center;
@@ -213,12 +216,12 @@
 
 .pagination__btn:hover,
 .pagination__page:hover {
-  background: rgba(99, 102, 241, 0.08);
+  background: var(--color-primary-08);
 }
 
 .pagination__page--active {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-text-on-primary);
 }
 
 .pagination__page--active:hover {
@@ -250,9 +253,8 @@
 }
 
 .transactions-form__label {
-  font-size: 14px;
+  font: var(--font-body);
   font-weight: 500;
-  line-height: 20px;
   color: var(--color-text);
   margin: 0;
 }
@@ -267,8 +269,7 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  font-family: inherit;
-  font-size: 14px;
+  font: var(--font-body);
 }
 
 /* Обёртка Input */
@@ -304,9 +305,8 @@
   color: var(--color-text);
   outline: none;
   box-sizing: border-box;
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1;
+  font: var(--font-body);
+  line-height: 24px;
   vertical-align: top;
 }
 
@@ -331,7 +331,7 @@
 .transactions-form .input__field:focus,
 .transactions-form__select:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  box-shadow: 0 0 0 3px var(--color-primary-12);
 }
 
 /* Options */
@@ -344,23 +344,22 @@
 /* Errors */
 .transactions-form__error {
   margin-top: -2px;
-  font-size: 13px;
-  line-height: 18px;
-  color: #dc2626;
+  font: var(--font-body);
+  color: var(--color-error-input);
 }
 
 .transactions-form__select--error,
 .transactions-form .input__field[aria-invalid='true'],
 .transactions-form input[aria-invalid='true'],
 .transactions-form select[aria-invalid='true'] {
-  border-color: #dc2626;
+  border-color: var(--color-error-input);
 }
 
 .transactions-form__select--error:focus,
 .transactions-form .input__field[aria-invalid='true']:focus,
 .transactions-form input[aria-invalid='true']:focus,
 .transactions-form select[aria-invalid='true']:focus {
-  border-color: #dc2626;
+  border-color: var(--color-error-input);
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
 }
 

@@ -42,23 +42,20 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-primary);
-  background: rgba(99, 102, 241, 0.12);
+  background: var(--color-primary-12);
   margin-bottom: 16px;
 }
 
 .guest-welcome__headline {
   margin: 0 0 12px;
-  font-size: clamp(1.5rem, 2.5vw, 2rem);
-  font-weight: 700;
-  line-height: 1.2;
+  font: var(--font-h1);
   color: var(--color-text);
   letter-spacing: -0.02em;
 }
 
 .guest-welcome__lead {
   margin: 0 0 20px;
-  font-size: 16px;
-  line-height: 1.6;
+  font: var(--font-body);
   color: var(--color-text-secondary);
 }
 
@@ -75,9 +72,9 @@
   min-height: 32px;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(99, 102, 241, 0.22);
-  background: rgba(99, 102, 241, 0.08);
-  color: #4146c9;
+  border: 1px solid var(--color-primary-22);
+  background: var(--color-primary-08);
+  color: var(--color-primary-muted);
   font-size: 12px;
   font-weight: 600;
   line-height: 1.2;
@@ -104,7 +101,7 @@
   min-height: 48px;
   padding-left: 24px;
   padding-right: 24px;
-  font-size: 15px;
+  font: var(--font-button);
 }
 
 .guest-welcome__hero-visual {
@@ -128,13 +125,13 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 2px solid rgba(99, 102, 241, 0.25);
+  border: 2px solid var(--color-primary-25);
   animation: guest-orbit-pulse 5s ease-in-out infinite;
 }
 
 .guest-welcome__orbit--2 {
   inset: 28px;
-  border-color: rgba(167, 139, 250, 0.35);
+  border-color: var(--color-primary-20);
   animation-delay: -2.5s;
 }
 
@@ -177,28 +174,25 @@
 
 .guest-welcome__feature-title {
   margin: 0 0 8px;
-  font-size: 16px;
-  font-weight: 600;
+  font: var(--font-h3);
   color: var(--color-text);
 }
 
 .guest-welcome__feature-text {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font: var(--font-body);
   color: var(--color-text-muted);
 }
 
 .guest-welcome__footnote {
   padding: 20px 22px;
   border-radius: var(--radius-md);
-  background: rgba(30, 41, 59, 0.04);
+  background: var(--color-primary-06);
   border: 1px solid var(--color-border);
 }
 
 .guest-welcome__footnote p {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.55;
+  font: var(--font-body);
   color: var(--color-text-secondary);
 }

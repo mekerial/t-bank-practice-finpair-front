@@ -33,7 +33,7 @@ function DonutChart({ a }: DonutChartProps) {
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="#a78bfa"
+        stroke="var(--color-chart-b)"
         strokeWidth="28"
       />
       <circle
@@ -41,7 +41,7 @@ function DonutChart({ a }: DonutChartProps) {
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="#6366f1"
+        stroke="var(--color-chart-a)"
         strokeWidth="28"
         strokeDasharray={`${aLen} ${c - aLen}`}
         strokeDashoffset={c / 4}
@@ -67,14 +67,14 @@ function DashboardContent({ data }: { data: DashboardPageData }) {
               <span className="dashboard__legend-item">
                 <span
                   className="dashboard__dot"
-                  style={{ background: '#6366f1' }}
+                  style={{ background: 'var(--color-chart-a)' }}
                 />
                 {partnerAShortName}: {partnerSplit.a}%
               </span>
               <span className="dashboard__legend-item">
                 <span
                   className="dashboard__dot"
-                  style={{ background: '#a78bfa' }}
+                  style={{ background: 'var(--color-chart-b)' }}
                 />
                 {partnerBShortName}: {partnerSplit.b}%
               </span>

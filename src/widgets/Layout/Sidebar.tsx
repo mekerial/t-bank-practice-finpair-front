@@ -16,7 +16,7 @@ export default function Sidebar() {
   const user = useAppSelector((s) => s.auth.user)
 
   return (
-    <aside className="sidebar">
+    <aside className={'sidebar' + (user ? '' : ' sidebar--guest')}>
       <div className="sidebar__top">
         <div className="sidebar__brand">{APP_NAME}</div>
         <div className="sidebar__subtitle">Финансы вдвоём</div>
@@ -59,6 +59,9 @@ export default function Sidebar() {
           </>
         ) : (
           <div className="sidebar__guest">
+            <p className="sidebar__guest-hint">
+              Войдите, чтобы увидеть суммы, графики и сохранять изменения.
+            </p>
             <NavLink to={ROUTES.LOGIN} className="sidebar__guest-btn">
               Войти
             </NavLink>
