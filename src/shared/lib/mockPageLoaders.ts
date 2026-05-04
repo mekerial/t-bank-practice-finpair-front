@@ -1,27 +1,19 @@
-import { delay } from './asyncUtils'
+import { fetchDashboard } from '../api/dashboardApi'
 import {
-  mockAnalyticsKpi,
-  mockCategories,
-  mockFinancialLoad,
-  mockInsights,
-  mockMainExpenses,
-  mockPartnerCompare,
-  mockRecommendations,
-  type CategorySlice,
-  type FinancialLoad,
-  type Insight,
-  type KpiItem,
-  type MainExpense,
-  type PartnerComparePoint,
-  type Recommendation
+  fetchAnalyticsSummary,
+  fetchAnalyticsCategories,
+  fetchAnalyticsDynamics,
+  fetchAnalyticsInsights
+} from '../api/analyticsApi'
+import type {
+  CategorySlice,
+  FinancialLoad,
+  Insight,
+  KpiItem,
+  MainExpense,
+  PartnerComparePoint,
+  Recommendation
 } from './mocks'
-
-/** Задержка загрузки страниц (мс). 0 — без ожидания. */
-const MOCK_PAGE_DELAY_MS = 420
-
-function shouldSimulatePageLoadFailure(): boolean {
-  return import.meta.env.VITE_SIMULATE_PAGE_ERROR === 'true'
-}
 
 export interface DashboardPageData {
   financialLoad: FinancialLoad
@@ -30,15 +22,7 @@ export interface DashboardPageData {
 }
 
 export async function loadDashboardPageData(): Promise<DashboardPageData> {
-  await delay(MOCK_PAGE_DELAY_MS)
-  if (shouldSimulatePageLoadFailure()) {
-    throw new Error('Симуляция ошибки загрузки (VITE_SIMULATE_PAGE_ERROR).')
-  }
-  return {
-    financialLoad: mockFinancialLoad,
-    recommendations: mockRecommendations,
-    mainExpenses: mockMainExpenses
-  }
+  return fetchDashboard()
 }
 
 export interface AnalyticsPageData {
@@ -49,14 +33,17 @@ export interface AnalyticsPageData {
 }
 
 export async function loadAnalyticsPageData(): Promise<AnalyticsPageData> {
-  await delay(MOCK_PAGE_DELAY_MS)
-  if (shouldSimulatePageLoadFailure()) {
-    throw new Error('Симуляция ошибки загрузки (VITE_SIMULATE_PAGE_ERROR).')
-  }
+  const [kpi, categories, dynamics, insights] = await Promise.all([
+    fetchAnalyticsSummary(),
+    fetchAnalyticsCategories(),
+    fetchAnalyticsDynamics(),
+    fetchAnalyticsInsights()
+  ])
+
   return {
-    kpi: mockAnalyticsKpi,
-    categories: mockCategories,
-    partnerCompare: mockPartnerCompare,
-    insights: mockInsights
+    kpi,
+    categories,
+    partnerCompare: dynamics.partnerCompare,
+    insights
   }
 }
