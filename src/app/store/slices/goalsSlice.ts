@@ -1,7 +1,22 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import type { Goal } from '../../../shared/lib/mocks'
-import { mockGoals } from '../../../shared/lib/mocks'
-import { delay, getErrorMessage } from '../../../shared/lib/asyncUtils'
+import { getErrorMessage } from '../../../shared/lib/asyncUtils'
+import {
+  fetchGoalsRequest,
+  createGoalRequest
+} from '../../../shared/api/goalsApi'
+import type { ApiGoal } from '../../../shared/api/goalsApi'
+
+export interface Goal {
+  id: string | number
+  title: string
+  deadline: string
+  percent: number
+  collected: number
+  target: number
+  monthly: number
+  remaining: number
+  isMain?: boolean
+}
 
 export interface CreateGoalPayload {
   title: string
@@ -28,14 +43,42 @@ const initialState: GoalsState = {
   createError: null
 }
 
+function apiToGoal(g: ApiGoal, isMain = false): Goal {
+  const collected = g.currentAmount ?? 0
+  const target = g.targetAmount ?? 0
+  const percent = target > 0 ? Math.min(100, Math.round((collected / target) * 100)) : 0
+  const remaining = Math.max(0, target - collected)
+  const monthly = g.monthlyContribution ?? 0
+
+  let deadline = g.deadline ?? ''
+  if (deadline) {
+    deadline = new Date(deadline).toLocaleDateString('ru-RU', {
+      month: 'long',
+      year: 'numeric'
+    })
+  }
+
+  return {
+    id: g.id,
+    title: g.title,
+    deadline,
+    percent,
+    collected,
+    target,
+    monthly,
+    remaining,
+    isMain
+  }
+}
+
 export const fetchGoals = createAsyncThunk<
   Goal[],
   void,
   { rejectValue: string }
 >('goals/fetchGoals', async (_, { rejectWithValue }) => {
   try {
-    await delay(350)
-    return mockGoals
+    const apiGoals = await fetchGoalsRequest()
+    return apiGoals.map((g, i) => apiToGoal(g, i === 0))
   } catch (e) {
     return rejectWithValue(getErrorMessage(e))
   }
@@ -47,7 +90,6 @@ export const createGoal = createAsyncThunk<
   { rejectValue: string }
 >('goals/createGoal', async (payload, { rejectWithValue }) => {
   try {
-    await delay(250)
     const collected = Number(payload.collected)
     const target = Number(payload.target)
     const monthly = Number(payload.monthly)
@@ -55,25 +97,19 @@ export const createGoal = createAsyncThunk<
     if (Number.isNaN(collected) || Number.isNaN(target) || Number.isNaN(monthly)) {
       return rejectWithValue('Проверьте числовые поля в форме')
     }
-
     if (target <= 0 || collected < 0 || monthly < 0 || collected > target) {
       return rejectWithValue('Проверьте значения цели: они некорректны')
     }
 
-    const remaining = Math.max(target - collected, 0)
-    const percent = Math.min(100, Math.round((collected / target) * 100))
-
-    return {
-      id: Date.now(),
+    const apiGoal = await createGoalRequest({
       title: payload.title.trim(),
-      deadline: payload.deadline.trim(),
-      collected,
-      target,
-      monthly,
-      remaining,
-      percent,
-      isMain: payload.isMain
-    }
+      targetAmount: target,
+      currentAmount: collected,
+      monthlyContribution: monthly,
+      deadline: payload.deadline || undefined
+    })
+
+    return apiToGoal(apiGoal, payload.isMain)
   } catch (e) {
     return rejectWithValue(getErrorMessage(e))
   }
@@ -110,12 +146,11 @@ const goalsSlice = createSlice({
         if (action.payload.isMain) {
           state.items = [
             action.payload,
-            ...state.items.map((goal) => ({ ...goal, isMain: false }))
+            ...state.items.map((g) => ({ ...g, isMain: false }))
           ]
-          return
+        } else {
+          state.items = [action.payload, ...state.items]
         }
-
-        state.items = [action.payload, ...state.items]
       })
       .addCase(createGoal.rejected, (state, action) => {
         state.createStatus = 'failed'

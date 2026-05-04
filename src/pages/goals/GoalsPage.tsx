@@ -3,11 +3,7 @@ import Card from '../../shared/ui/Card'
 import Button from '../../shared/ui/Button'
 import AsyncDataView from '../../shared/ui/AsyncDataView'
 import { IconPlus, IconGoals } from '../../shared/ui/icons'
-import {
-  mockGoalTips,
-  formatMoneyPlain,
-  type Goal
-} from '../../shared/lib/mocks'
+import { mockGoalTips, formatMoneyPlain } from '../../shared/lib/mocks'
 import {
   clearCreateGoalError,
   createGoal,
@@ -15,6 +11,7 @@ import {
   useAppDispatch,
   useAppSelector
 } from '../../app/store'
+import type { Goal } from '../../app/store/slices/goalsSlice'
 import GoalCreateForm, {
   type GoalCreateFormValues
 } from './components/GoalCreateForm'
