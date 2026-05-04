@@ -1,18 +1,35 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import type { Transaction, TransactionsSummary } from '../../../shared/lib/mocks'
+import { getErrorMessage } from '../../../shared/lib/asyncUtils'
 import {
-  mockTransactions,
-  mockTransactionsSummary
-} from '../../../shared/lib/mocks'
-import { delay, getErrorMessage } from '../../../shared/lib/asyncUtils'
-import type { PartnerLabel } from '../../../shared/lib/mocks'
+  fetchTransactionsRequest,
+  createTransactionRequest
+} from '../../../shared/api/transactionsApi'
+import type { ApiTransaction } from '../../../shared/api/transactionsApi'
+
+export type { ApiTransaction }
+
+export interface Transaction {
+  id: string | number
+  category: string
+  date: string
+  payer: string
+  amount: number
+}
+
+export interface TransactionsSummary {
+  income: number
+  expense: number
+  balance: number
+  balanceChangePercent: number
+  period: string
+}
 
 export interface CreateTransactionPayload {
   category: string
   amount: string
-  payer: PartnerLabel
   type: 'income' | 'expense'
   date: string
+  description?: string
 }
 
 interface TransactionsState {
@@ -24,49 +41,52 @@ interface TransactionsState {
   addError: string | null
 }
 
+const defaultSummary: TransactionsSummary = {
+  income: 0,
+  expense: 0,
+  balance: 0,
+  balanceChangePercent: 0,
+  period: ''
+}
+
 const initialState: TransactionsState = {
   items: [],
-  summary: mockTransactionsSummary,
+  summary: defaultSummary,
   status: 'idle',
   error: null,
   addStatus: 'idle',
   addError: null
 }
 
-function formatTransactionDate(value: string) {
-  const date = new Date(value)
-
-  const parts = new Intl.DateTimeFormat('ru-RU', {
+function apiToTransaction(t: ApiTransaction): Transaction {
+  const dateStr = new Date(t.date).toLocaleDateString('ru-RU', {
     day: 'numeric',
     month: 'short',
     year: 'numeric'
-  }).formatToParts(date)
-
-  const day = parts.find((part) => part.type === 'day')?.value ?? ''
-  const month = (
-    parts.find((part) => part.type === 'month')?.value ?? ''
-  ).replace('.', '')
-  const year = parts.find((part) => part.type === 'year')?.value ?? ''
-
-  return `${day} ${month} ${year}`
+  })
+  const amount = t.type === 'expense' ? -Math.abs(t.amount) : Math.abs(t.amount)
+  return {
+    id: t.id,
+    category: t.title ?? t.category,
+    date: dateStr,
+    payer: '',
+    amount
+  }
 }
 
-function calculateSummary(items: Transaction[]): TransactionsSummary {
+function calcSummary(items: Transaction[]): TransactionsSummary {
   const income = items
-    .filter((item) => item.amount > 0)
-    .reduce((acc, item) => acc + item.amount, 0)
+    .filter((i) => i.amount > 0)
+    .reduce((acc, i) => acc + i.amount, 0)
   const expense = Math.abs(
-    items
-      .filter((item) => item.amount < 0)
-      .reduce((acc, item) => acc + item.amount, 0)
+    items.filter((i) => i.amount < 0).reduce((acc, i) => acc + i.amount, 0)
   )
-
   return {
     income,
     expense,
     balance: income - expense,
-    balanceChangePercent: mockTransactionsSummary.balanceChangePercent,
-    period: mockTransactionsSummary.period
+    balanceChangePercent: 0,
+    period: new Date().toLocaleString('ru-RU', { month: 'long' })
   }
 }
 
@@ -76,8 +96,9 @@ export const fetchTransactions = createAsyncThunk<
   { rejectValue: string }
 >('transactions/fetchTransactions', async (_, { rejectWithValue }) => {
   try {
-    await delay(350)
-    return { items: mockTransactions, summary: mockTransactionsSummary }
+    const apiItems = await fetchTransactionsRequest()
+    const items = apiItems.map(apiToTransaction)
+    return { items, summary: calcSummary(items) }
   } catch (e) {
     return rejectWithValue(getErrorMessage(e))
   }
@@ -89,19 +110,18 @@ export const createTransaction = createAsyncThunk<
   { rejectValue: string }
 >('transactions/createTransaction', async (payload, { rejectWithValue }) => {
   try {
-    await delay(250)
     const amountNumber = Number(payload.amount.replace(',', '.').trim())
     if (Number.isNaN(amountNumber) || amountNumber <= 0) {
-      return rejectWithValue('Не удалось сохранить транзакцию: некорректная сумма')
+      return rejectWithValue('Некорректная сумма')
     }
-
-    return {
-      id: Date.now(),
+    const apiItem = await createTransactionRequest({
+      type: payload.type,
       category: payload.category.trim(),
-      payer: payload.payer,
-      date: formatTransactionDate(payload.date),
-      amount: payload.type === 'income' ? amountNumber : -amountNumber
-    }
+      amount: amountNumber,
+      description: payload.description,
+      date: payload.date
+    })
+    return apiToTransaction(apiItem)
   } catch (e) {
     return rejectWithValue(getErrorMessage(e))
   }
@@ -137,7 +157,7 @@ const transactionsSlice = createSlice({
       .addCase(createTransaction.fulfilled, (state, action) => {
         state.addStatus = 'succeeded'
         state.items = [action.payload, ...state.items]
-        state.summary = calculateSummary(state.items)
+        state.summary = calcSummary(state.items)
       })
       .addCase(createTransaction.rejected, (state, action) => {
         state.addStatus = 'failed'
