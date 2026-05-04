@@ -1,12 +1,7 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import {
-  clearAuthError,
-  loginUser,
-  useAppDispatch,
-  useAppSelector
-} from '../../app/store'
+import { loginUser, useAppDispatch, useAppSelector } from '../../app/store'
 import { ROUTES } from '../../shared/config/routes'
 import { getErrorMessage } from '../../shared/lib/asyncUtils'
 import Input from '../../shared/ui/Input'
@@ -21,43 +16,31 @@ interface LoginForm {
 export default function LoginPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
-  const { user, status, error } = useAppSelector((s) => s.auth)
+  const user = useAppSelector((s) => s.auth.user)
   const [formError, setFormError] = useState('')
 
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting, isValid }
+    formState: { errors, isSubmitting }
   } = useForm<LoginForm>({
-    defaultValues: {
-      email: '',
-      password: ''
-    },
-    mode: 'onChange'
+    defaultValues: { email: '', password: '' },
+    mode: 'onSubmit'
   })
 
   const onSubmit = async (data: LoginForm) => {
     setFormError('')
-    dispatch(clearAuthError())
     try {
       await dispatch(loginUser(data)).unwrap()
       navigate(ROUTES.DASHBOARD, { replace: true })
     } catch (e) {
-      const message =
-        typeof e === 'string' ? e : getErrorMessage(e)
-      setFormError(message)
+      setFormError(typeof e === 'string' ? e : getErrorMessage(e))
     }
   }
 
   const onInvalid = () => {
     setFormError('Заполните все обязательные поля')
   }
-
-  useEffect(() => {
-    if (formError === 'Заполните все обязательные поля' && isValid) {
-      setFormError('')
-    }
-  }, [formError, isValid])
 
   if (user) {
     return <Navigate to={ROUTES.DASHBOARD} replace />
@@ -90,8 +73,8 @@ export default function LoginPage() {
         onSubmit={handleSubmit(onSubmit, onInvalid)}
         noValidate
       >
-        {(error || formError) && (
-          <p className="auth-form__common-error">{error ?? formError}</p>
+        {formError && (
+          <p className="auth-form__common-error">{formError}</p>
         )}
 
         <Controller
@@ -99,10 +82,7 @@ export default function LoginPage() {
           control={control}
           rules={{
             required: 'Введите email',
-            pattern: {
-              value: /\S+@\S+\.\S+/,
-              message: 'Некорректный email'
-            }
+            pattern: { value: /\S+@\S+\.\S+/, message: 'Некорректный email' }
           }}
           render={({ field }) => (
             <Input
@@ -125,10 +105,7 @@ export default function LoginPage() {
           control={control}
           rules={{
             required: 'Введите пароль',
-            minLength: {
-              value: 6,
-              message: 'Минимум 6 символов'
-            }
+            minLength: { value: 8, message: 'Минимум 8 символов' }
           }}
           render={({ field }) => (
             <Input
@@ -146,8 +123,8 @@ export default function LoginPage() {
           <p className="auth-form__error">{errors.password.message}</p>
         )}
 
-        <Button type="submit" fullWidth disabled={isSubmitting || status === 'loading'}>
-          {isSubmitting || status === 'loading' ? 'Входим…' : 'Войти'}
+        <Button type="submit" fullWidth disabled={isSubmitting}>
+          {isSubmitting ? 'Входим…' : 'Войти'}
         </Button>
       </form>
 

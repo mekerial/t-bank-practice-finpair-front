@@ -1,19 +1,30 @@
 import { NavLink } from 'react-router-dom'
-import { logout, useAppDispatch, useAppSelector } from '../../app/store'
+import { logout, logoutUser, useAppDispatch, useAppSelector } from '../../app/store'
 import { NAV_ITEMS, ROUTES } from '../../shared/config/routes'
 import { APP_NAME } from '../../shared/constants/app'
 
-function initials(displayName: string) {
-  return displayName
-    .split(' ')
+function initials(name: string) {
+  return name
+    .split(/[\s@]/)
     .map((w) => w[0])
+    .filter(Boolean)
     .join('')
     .slice(0, 2)
+    .toUpperCase()
 }
 
 export default function Sidebar() {
   const dispatch = useAppDispatch()
   const user = useAppSelector((s) => s.auth.user)
+
+  const displayName = user?.displayName ?? user?.email ?? ''
+
+  const handleLogout = () => {
+    dispatch(logoutUser())
+      .unwrap()
+      .catch(() => {})
+      .finally(() => dispatch(logout()))
+  }
 
   return (
     <aside className={'sidebar' + (user ? '' : ' sidebar--guest')}>
@@ -44,14 +55,14 @@ export default function Sidebar() {
       <div className="sidebar__user">
         {user ? (
           <>
-            <div className="sidebar__avatar">{initials(user.displayName)}</div>
+            <div className="sidebar__avatar">{initials(displayName)}</div>
             <div className="sidebar__user-info">
-              <div className="sidebar__user-name">{user.displayName}</div>
+              <div className="sidebar__user-name">{displayName}</div>
               <div className="sidebar__user-email">{user.email}</div>
               <button
                 type="button"
                 className="sidebar__logout"
-                onClick={() => dispatch(logout())}
+                onClick={handleLogout}
               >
                 Выйти
               </button>
@@ -65,7 +76,10 @@ export default function Sidebar() {
             <NavLink to={ROUTES.LOGIN} className="sidebar__guest-btn">
               Войти
             </NavLink>
-            <NavLink to={ROUTES.REGISTER} className="sidebar__guest-btn sidebar__guest-btn--secondary">
+            <NavLink
+              to={ROUTES.REGISTER}
+              className="sidebar__guest-btn sidebar__guest-btn--secondary"
+            >
               Регистрация
             </NavLink>
           </div>

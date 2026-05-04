@@ -1,54 +1,82 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { getErrorMessage } from '../../../shared/lib/asyncUtils'
 import {
-  mockLoginRequest,
-  mockRegisterRequest
-} from '../../../shared/lib/authMockRequests'
-
-export interface AuthUser {
-  email: string
-  displayName: string
-}
+  loginRequest,
+  registerRequest,
+  refreshRequest,
+  logoutRequest
+} from '../../../shared/api/authApi'
+import type { AuthUser } from '../../../shared/api/authApi'
+import { setAccessToken } from '../../../shared/api/apiClient'
 
 interface AuthState {
   user: AuthUser | null
-  status: 'idle' | 'loading' | 'succeeded' | 'failed'
-  error: string | null
+  accessToken: string | null
+  restoreStatus: 'idle' | 'loading' | 'done'
 }
 
 const initialState: AuthState = {
   user: null,
-  status: 'idle',
-  error: null
+  accessToken: null,
+  restoreStatus: 'idle'
 }
 
 export const loginUser = createAsyncThunk<
-  AuthUser,
+  { user: AuthUser; accessToken: string },
   { email: string; password: string },
   { rejectValue: string }
 >('auth/loginUser', async (creds, { rejectWithValue }) => {
   try {
-    return await mockLoginRequest(creds)
+    const result = await loginRequest(creds)
+    setAccessToken(result.accessToken)
+    return { user: result.user, accessToken: result.accessToken }
   } catch (e) {
     return rejectWithValue(getErrorMessage(e))
   }
 })
 
 export const registerUser = createAsyncThunk<
-  AuthUser,
+  { user: AuthUser; accessToken: string },
   { name: string; email: string; password: string },
   { rejectValue: string }
 >('auth/registerUser', async (payload, { rejectWithValue }) => {
   try {
-    return await mockRegisterRequest({
-      name: payload.name,
-      email: payload.email,
-      password: payload.password
-    })
+    const result = await registerRequest(payload)
+    setAccessToken(result.accessToken)
+    return { user: result.user, accessToken: result.accessToken }
   } catch (e) {
     return rejectWithValue(getErrorMessage(e))
   }
 })
+
+export const tryRestoreSession = createAsyncThunk<
+  { user: AuthUser; accessToken: string },
+  void,
+  { rejectValue: string }
+>('auth/tryRestoreSession', async (_, { rejectWithValue }) => {
+  try {
+    const result = await refreshRequest()
+    setAccessToken(result.accessToken)
+    const { getMeRequest } = await import('../../../shared/api/authApi')
+    const user = await getMeRequest()
+    return { user, accessToken: result.accessToken }
+  } catch (e) {
+    return rejectWithValue(getErrorMessage(e))
+  }
+})
+
+export const logoutUser = createAsyncThunk<void, void, { rejectValue: string }>(
+  'auth/logoutUser',
+  async (_, { rejectWithValue }) => {
+    try {
+      await logoutRequest()
+    } catch (e) {
+      return rejectWithValue(getErrorMessage(e))
+    } finally {
+      setAccessToken(null)
+    }
+  }
+)
 
 const authSlice = createSlice({
   name: 'auth',
@@ -56,40 +84,43 @@ const authSlice = createSlice({
   reducers: {
     logout(state) {
       state.user = null
-      state.error = null
-    },
-    clearAuthError(state) {
-      state.error = null
+      state.accessToken = null
+      setAccessToken(null)
     }
   },
   extraReducers(builder) {
     builder
-      .addCase(loginUser.pending, (state) => {
-        state.status = 'loading'
-        state.error = null
-      })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.status = 'succeeded'
-        state.user = action.payload
-      })
-      .addCase(loginUser.rejected, (state, action) => {
-        state.status = 'failed'
-        state.error = action.payload ?? 'Не удалось выполнить вход'
-      })
-      .addCase(registerUser.pending, (state) => {
-        state.status = 'loading'
-        state.error = null
+        state.user = action.payload.user
+        state.accessToken = action.payload.accessToken
       })
       .addCase(registerUser.fulfilled, (state, action) => {
-        state.status = 'succeeded'
-        state.user = action.payload
+        state.user = action.payload.user
+        state.accessToken = action.payload.accessToken
       })
-      .addCase(registerUser.rejected, (state, action) => {
-        state.status = 'failed'
-        state.error = action.payload ?? 'Не удалось зарегистрироваться'
+      .addCase(tryRestoreSession.pending, (state) => {
+        state.restoreStatus = 'loading'
+      })
+      .addCase(tryRestoreSession.fulfilled, (state, action) => {
+        state.user = action.payload.user
+        state.accessToken = action.payload.accessToken
+        state.restoreStatus = 'done'
+      })
+      .addCase(tryRestoreSession.rejected, (state) => {
+        state.user = null
+        state.accessToken = null
+        state.restoreStatus = 'done'
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null
+        state.accessToken = null
+      })
+      .addCase(logoutUser.rejected, (state) => {
+        state.user = null
+        state.accessToken = null
       })
   }
 })
 
-export const { logout, clearAuthError } = authSlice.actions
+export const { logout } = authSlice.actions
 export default authSlice.reducer

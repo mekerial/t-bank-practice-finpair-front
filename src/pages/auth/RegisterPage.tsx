@@ -1,12 +1,7 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import {
-  clearAuthError,
-  registerUser,
-  useAppDispatch,
-  useAppSelector
-} from '../../app/store'
+import { registerUser, useAppDispatch, useAppSelector } from '../../app/store'
 import { ROUTES } from '../../shared/config/routes'
 import { getErrorMessage } from '../../shared/lib/asyncUtils'
 import Input from '../../shared/ui/Input'
@@ -23,54 +18,36 @@ interface RegisterForm {
 export default function RegisterPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
-  const { user, status, error } = useAppSelector((s) => s.auth)
+  const user = useAppSelector((s) => s.auth.user)
   const [formError, setFormError] = useState('')
 
   const {
     control,
     handleSubmit,
     watch,
-    formState: { errors, isSubmitting, isValid }
+    formState: { errors, isSubmitting }
   } = useForm<RegisterForm>({
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      passwordConfirm: ''
-    },
-    mode: 'onChange'
+    defaultValues: { name: '', email: '', password: '', passwordConfirm: '' },
+    mode: 'onSubmit'
   })
 
   const passwordValue = watch('password')
 
   const onSubmit = async (data: RegisterForm) => {
     setFormError('')
-    dispatch(clearAuthError())
     try {
       await dispatch(
-        registerUser({
-          name: data.name,
-          email: data.email,
-          password: data.password
-        })
+        registerUser({ name: data.name, email: data.email, password: data.password })
       ).unwrap()
       navigate(ROUTES.DASHBOARD, { replace: true })
     } catch (e) {
-      const message =
-        typeof e === 'string' ? e : getErrorMessage(e)
-      setFormError(message)
+      setFormError(typeof e === 'string' ? e : getErrorMessage(e))
     }
   }
 
   const onInvalid = () => {
     setFormError('Заполните все обязательные поля')
   }
-
-  useEffect(() => {
-    if (formError === 'Заполните все обязательные поля' && isValid) {
-      setFormError('')
-    }
-  }, [formError, isValid])
 
   if (user) {
     return <Navigate to={ROUTES.DASHBOARD} replace />
@@ -104,16 +81,14 @@ export default function RegisterPage() {
         onSubmit={handleSubmit(onSubmit, onInvalid)}
         noValidate
       >
-        {(error || formError) && (
-          <p className="auth-form__common-error">{error ?? formError}</p>
+        {formError && (
+          <p className="auth-form__common-error">{formError}</p>
         )}
 
         <Controller
           name="name"
           control={control}
-          rules={{
-            required: 'Введите имя'
-          }}
+          rules={{ required: 'Введите имя' }}
           render={({ field }) => (
             <Input
               id="name"
@@ -125,19 +100,14 @@ export default function RegisterPage() {
             />
           )}
         />
-        {errors.name && (
-          <p className="auth-form__error">{errors.name.message}</p>
-        )}
+        {errors.name && <p className="auth-form__error">{errors.name.message}</p>}
 
         <Controller
           name="email"
           control={control}
           rules={{
             required: 'Введите email',
-            pattern: {
-              value: /\S+@\S+\.\S+/,
-              message: 'Некорректный email'
-            }
+            pattern: { value: /\S+@\S+\.\S+/, message: 'Некорректный email' }
           }}
           render={({ field }) => (
             <Input
@@ -151,43 +121,35 @@ export default function RegisterPage() {
             />
           )}
         />
-        {errors.email && (
-          <p className="auth-form__error">{errors.email.message}</p>
-        )}
+        {errors.email && <p className="auth-form__error">{errors.email.message}</p>}
 
         <Controller
           name="password"
           control={control}
           rules={{
             required: 'Введите пароль',
-            minLength: {
-              value: 6,
-              message: 'Минимум 6 символов'
-            }
+            minLength: { value: 8, message: 'Минимум 8 символов' }
           }}
           render={({ field }) => (
             <Input
               id="password"
               label="Пароль"
               type="password"
-              placeholder="Минимум 6 символов"
+              placeholder="Минимум 8 символов"
               autoComplete="new-password"
               aria-invalid={errors.password ? 'true' : 'false'}
               {...field}
             />
           )}
         />
-        {errors.password && (
-          <p className="auth-form__error">{errors.password.message}</p>
-        )}
+        {errors.password && <p className="auth-form__error">{errors.password.message}</p>}
 
         <Controller
           name="passwordConfirm"
           control={control}
           rules={{
             required: 'Подтвердите пароль',
-            validate: (value) =>
-              value === passwordValue || 'Пароли не совпадают'
+            validate: (value) => value === passwordValue || 'Пароли не совпадают'
           }}
           render={({ field }) => (
             <Input
@@ -202,15 +164,11 @@ export default function RegisterPage() {
           )}
         />
         {errors.passwordConfirm && (
-          <p className="auth-form__error">
-            {errors.passwordConfirm.message}
-          </p>
+          <p className="auth-form__error">{errors.passwordConfirm.message}</p>
         )}
 
-        <Button type="submit" fullWidth disabled={isSubmitting || status === 'loading'}>
-          {isSubmitting || status === 'loading'
-            ? 'Создаём аккаунт…'
-            : 'Создать аккаунт'}
+        <Button type="submit" fullWidth disabled={isSubmitting}>
+          {isSubmitting ? 'Создаём аккаунт…' : 'Создать аккаунт'}
         </Button>
       </form>
 
