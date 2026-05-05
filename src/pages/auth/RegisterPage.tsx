@@ -128,7 +128,16 @@ export default function RegisterPage() {
           control={control}
           rules={{
             required: 'Введите пароль',
-            minLength: { value: 8, message: 'Минимум 8 символов' }
+            minLength: { value: 8, message: 'Минимум 8 символов' },
+            validate: (value) => {
+              if (!/[a-zA-Zа-яА-ЯёЁ]/.test(value)) {
+                return 'Нужна хотя бы одна буква'
+              }
+              if (!/\d/.test(value)) {
+                return 'Нужна хотя бы одна цифра'
+              }
+              return true
+            }
           }}
           render={({ field }) => (
             <Input
