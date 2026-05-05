@@ -1,0 +1,157 @@
+/* ——— Трек-переключатель (одно нажатие) ——— */
+
+.theme-track {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  min-width: 38px;
+  min-height: 22px;
+  border: none;
+  border-radius: 999px;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: var(--color-switch-track);
+  transition: background-color 0.2s ease;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.theme-track[aria-checked='true'] {
+  background: var(--color-primary);
+}
+
+.theme-track__icons {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5px;
+  pointer-events: none;
+  color: var(--color-text-muted);
+}
+
+.theme-track[aria-checked='true'] .theme-track__icons {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.theme-track__sun,
+.theme-track__moon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.theme-track[aria-checked='false'] .theme-track__moon {
+  opacity: 0.35;
+}
+
+.theme-track[aria-checked='true'] .theme-track__sun {
+  opacity: 0.35;
+}
+
+.theme-track__knob {
+  position: absolute;
+  top: 3px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-knob);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+  transition: transform 0.22s ease;
+}
+
+.theme-track[aria-checked='true'] .theme-track__knob {
+  transform: translateX(18px);
+}
+
+.theme-track:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.06),
+    0 0 0 3px var(--color-primary-15);
+}
+
+.theme-track[aria-checked='true']:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-primary-25);
+}
+
+/* ——— Шапка основного layout (правый верх, компактная «пилюля») ——— */
+
+.theme-panel--header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 3px 3px 10px;
+  margin-right: -4px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-panel__header-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  text-align: right;
+  line-height: 1.15;
+}
+
+.theme-panel__header-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.theme-panel__header-status {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 560px) {
+  .theme-panel__header-meta {
+    display: none;
+  }
+
+  .theme-panel--header {
+    margin-right: 0;
+    padding: 2px;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+/* ——— Плавающая панель (вход / 404) ——— */
+
+.theme-panel--floating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  min-width: 72px;
+}
+
+.theme-panel__floating-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.theme-panel__floating-status {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}

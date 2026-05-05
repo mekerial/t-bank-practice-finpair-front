@@ -1,33 +1,29 @@
 .support {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .support__title {
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 32px;
+  font: var(--font-h1);
   color: var(--color-text);
 }
 
 .support__greeting {
-  font-size: 18px;
-  font-weight: 600;
+  font: var(--font-h3);
   color: var(--color-text);
   margin-bottom: 8px;
 }
 
 .support__text {
-  font-size: 14px;
+  font: var(--font-body);
   color: var(--color-text-secondary);
-  line-height: 22px;
 }
 
 .support__grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 20px;
+  gap: 24px;
 }
 
 @media (max-width: 1000px) {
@@ -57,8 +53,8 @@
   padding: 14px 16px;
   background: transparent;
   border: none;
-  font-family: inherit;
-  font-size: 15px;
+  font: var(--font-body);
+  font-weight: 600;
   color: var(--color-text);
   text-align: left;
   cursor: pointer;
@@ -76,9 +72,8 @@
 
 .faq__answer {
   padding: 0 16px 16px;
-  font-size: 14px;
+  font: var(--font-body);
   color: var(--color-text-secondary);
-  line-height: 22px;
 }
 
 .chat-head {
@@ -92,7 +87,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(99, 102, 241, 0.12);
+  background: var(--color-primary-12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -101,21 +96,20 @@
 }
 
 .chat-head__title {
-  font-size: 16px;
-  font-weight: 600;
+  font: var(--font-h3);
   color: var(--color-text);
 }
 
 .chat-head__hint {
-  font-size: 13px;
+  font: var(--font-body);
   color: var(--color-text-muted);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .chat-msg {
   display: flex;
   gap: 10px;
-  background: var(--color-bg);
+  background: var(--color-surface);
   border-radius: var(--radius-md);
   padding: 14px;
   margin-bottom: 12px;
@@ -126,7 +120,7 @@
   height: 32px;
   border-radius: 50%;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-text-on-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,16 +130,15 @@
 }
 
 .chat-msg__name {
-  font-size: 13px;
+  font: var(--font-body);
   font-weight: 600;
   color: var(--color-text);
 }
 
 .chat-msg__text {
-  font-size: 14px;
+  font: var(--font-body);
   color: var(--color-text-secondary);
   margin-top: 4px;
-  line-height: 20px;
 }
 
 .chat-textarea {
@@ -154,8 +147,7 @@
   padding: 12px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  font-family: inherit;
-  font-size: 14px;
+  font: var(--font-body);
   color: var(--color-text);
   background: var(--color-surface-alt);
   resize: vertical;
@@ -186,17 +178,17 @@
 }
 
 .contacts__label {
-  font-size: 13px;
+  font: var(--font-body);
   color: var(--color-text-muted);
 }
 
 .contacts__value {
-  font-size: 15px;
+  font: var(--font-body);
   color: var(--color-text);
 }
 
 .contacts__link {
-  font-size: 15px;
+  font: var(--font-body);
   color: var(--color-primary);
   text-decoration: none;
 }

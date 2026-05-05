@@ -1,11 +1,14 @@
 import Card from '../../shared/ui/Card'
 import { IconBulb } from '../../shared/ui/icons'
 import {
-  mockFinancialLoad,
-  mockRecommendations,
-  mockMainExpenses,
-  formatMoneyPlain
+  formatMoneyPlain,
+  partnerAShortName,
+  partnerBShortName
 } from '../../shared/lib/mocks'
+import { useAsyncData } from '../../shared/hooks/useAsyncData'
+import { loadDashboardPageData } from '../../shared/lib/mockPageLoaders'
+import type { DashboardPageData } from '../../shared/lib/mockPageLoaders'
+import AsyncDataView from '../../shared/ui/AsyncDataView'
 import './dashboard.css'
 
 interface DonutChartProps {
@@ -30,7 +33,7 @@ function DonutChart({ a }: DonutChartProps) {
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="#a78bfa"
+        stroke="var(--color-chart-b)"
         strokeWidth="28"
       />
       <circle
@@ -38,7 +41,7 @@ function DonutChart({ a }: DonutChartProps) {
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="#6366f1"
+        stroke="var(--color-chart-a)"
         strokeWidth="28"
         strokeDasharray={`${aLen} ${c - aLen}`}
         strokeDashoffset={c / 4}
@@ -49,14 +52,13 @@ function DonutChart({ a }: DonutChartProps) {
   )
 }
 
-export default function DashboardPage() {
+function DashboardContent({ data }: { data: DashboardPageData }) {
+  const { financialLoad, recommendations, mainExpenses } = data
   const { totalIncome, balance, loadPercent, totalExpense, partnerSplit } =
-    mockFinancialLoad
+    financialLoad
 
   return (
-    <div className="dashboard">
-      <h1 className="dashboard__title">Финансовая нагрузка</h1>
-
+    <>
       <div className="dashboard__grid">
         <Card title="Распределение нагрузки">
           <div className="dashboard__donut-wrap">
@@ -65,16 +67,16 @@ export default function DashboardPage() {
               <span className="dashboard__legend-item">
                 <span
                   className="dashboard__dot"
-                  style={{ background: '#6366f1' }}
+                  style={{ background: 'var(--color-chart-a)' }}
                 />
-                Партнёр А: {partnerSplit.a}%
+                {partnerAShortName}: {partnerSplit.a}%
               </span>
               <span className="dashboard__legend-item">
                 <span
                   className="dashboard__dot"
-                  style={{ background: '#a78bfa' }}
+                  style={{ background: 'var(--color-chart-b)' }}
                 />
-                Партнёр Б: {partnerSplit.b}%
+                {partnerBShortName}: {partnerSplit.b}%
               </span>
             </div>
           </div>
@@ -120,7 +122,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="smart-balance__list">
-          {mockRecommendations.map((r, i) => (
+          {recommendations.map((r, i) => (
             <div key={r.id} className="smart-balance__item">
               <span className="smart-balance__index">
                 {String(i + 1).padStart(2, '0')}
@@ -140,7 +142,7 @@ export default function DashboardPage() {
             <span>Доля</span>
             <span className="expenses-table__right">Из бюджета</span>
           </div>
-          {mockMainExpenses.map((e) => (
+          {mainExpenses.map((e) => (
             <div key={e.id} className="expenses-table__row">
               <span className="expenses-table__category">{e.category}</span>
               <span>{formatMoneyPlain(e.amount)}</span>
@@ -162,6 +164,27 @@ export default function DashboardPage() {
           ))}
         </div>
       </Card>
+    </>
+  )
+}
+
+export default function DashboardPage() {
+  const { data, status, error, refetch } = useAsyncData('dashboard', () =>
+    loadDashboardPageData()
+  )
+
+  return (
+    <div className="dashboard">
+      <h1 className="dashboard__title">Финансовая нагрузка</h1>
+
+      <AsyncDataView
+        status={status}
+        error={error}
+        onRetry={refetch}
+        loadingLabel="Загружаем дашборд…"
+      >
+        {data ? <DashboardContent data={data} /> : null}
+      </AsyncDataView>
     </div>
   )
 }

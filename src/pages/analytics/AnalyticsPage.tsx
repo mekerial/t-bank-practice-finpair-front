@@ -1,13 +1,15 @@
 import Card from '../../shared/ui/Card'
 import {
-  mockAnalyticsKpi,
-  mockCategories,
-  mockPartnerCompare,
-  mockInsights,
   formatMoneyPlain,
+  partnerAShortName,
+  partnerBShortName,
   type CategorySlice,
   type PartnerComparePoint
 } from '../../shared/lib/mocks'
+import type { AnalyticsPageData } from '../../shared/lib/mockPageLoaders'
+import { loadAnalyticsPageData } from '../../shared/lib/mockPageLoaders'
+import { useAsyncData } from '../../shared/hooks/useAsyncData'
+import AsyncDataView from '../../shared/ui/AsyncDataView'
 import './analytics.css'
 
 function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
@@ -50,7 +52,7 @@ function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
           y1={padding.top}
           x2={padding.left}
           y2={height - padding.bottom}
-          stroke="#94a3b8"
+          stroke="var(--color-chart-axis)"
           strokeWidth="1.5"
         />
         
@@ -59,7 +61,7 @@ function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
           y1={height - padding.bottom}
           x2={width - padding.right}
           y2={height - padding.bottom}
-          stroke="#94a3b8"
+          stroke="var(--color-chart-axis)"
           strokeWidth="1.5"
         />
 
@@ -73,7 +75,7 @@ function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
                 x2={width - padding.right}
                 y1={y}
                 y2={y}
-                stroke="#eef0f4"
+                stroke="var(--color-chart-grid)"
                 strokeWidth="1"
               />
               <text
@@ -81,7 +83,7 @@ function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
                 y={y + 4}
                 fontSize="11"
                 textAnchor="end"
-                fill="#64748b"
+                fill="var(--color-chart-tick)"
               >
                 {formatYValue(valueAtLine)}
               </text>
@@ -89,15 +91,15 @@ function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
           )
         })}
 
-        <path d={pathA} fill="none" stroke="#6366f1" strokeWidth="2.5" />
-        <path d={pathB} fill="none" stroke="#a78bfa" strokeWidth="2.5" />
+        <path d={pathA} fill="none" stroke="var(--color-chart-a)" strokeWidth="2.5" />
+        <path d={pathB} fill="none" stroke="var(--color-chart-b)" strokeWidth="2.5" />
 
         {pointsA.map((p) => (
-          <circle key={`a-${p.month}`} cx={p.x} cy={p.y} r="4" fill="#6366f1" stroke="#fff" strokeWidth="1.5" />
+          <circle key={`a-${p.month}`} cx={p.x} cy={p.y} r="4" fill="var(--color-chart-a)" stroke="#fff" strokeWidth="1.5" />
         ))}
 
         {pointsB.map((p) => (
-          <circle key={`b-${p.month}`} cx={p.x} cy={p.y} r="4" fill="#a78bfa" stroke="#fff" strokeWidth="1.5" />
+          <circle key={`b-${p.month}`} cx={p.x} cy={p.y} r="4" fill="var(--color-chart-b)" stroke="#fff" strokeWidth="1.5" />
         ))}
 
         {pointsA.map((p, i) => (
@@ -107,7 +109,7 @@ function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
             y={height - padding.bottom + 15}
             fontSize="11"
             textAnchor="middle"
-            fill="#64748b"
+            fill="var(--color-chart-tick)"
           >
             {p.month}
           </text>
@@ -116,10 +118,12 @@ function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
       
       <div className="bar-legend">
         <span>
-          <span className="bar-legend__dot" style={{ background: '#6366f1' }} /> Партнёр А
+          <span className="bar-legend__dot" style={{ background: 'var(--color-chart-a)' }} />{' '}
+          {partnerAShortName}
         </span>
         <span>
-          <span className="bar-legend__dot" style={{ background: '#a78bfa' }} /> Партнёр Б
+          <span className="bar-legend__dot" style={{ background: 'var(--color-chart-b)' }} />{' '}
+          {partnerBShortName}
         </span>
       </div>
     </div>
@@ -189,7 +193,7 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
         y1={padding.top}
         x2={padding.left}
         y2={height - padding.bottom}
-        stroke="#94a3b8"
+        stroke="var(--color-chart-axis)"
         strokeWidth="1.5"
       />
       
@@ -198,7 +202,7 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
         y1={height - padding.bottom}
         x2={width - padding.right}
         y2={height - padding.bottom}
-        stroke="#94a3b8"
+        stroke="var(--color-chart-axis)"
         strokeWidth="1.5"
       />
 
@@ -212,7 +216,7 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
               x2={width - padding.right}
               y1={y}
               y2={y}
-              stroke="#eef0f4"
+              stroke="var(--color-chart-grid)"
               strokeWidth="1"
             />
             <text
@@ -220,7 +224,7 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
               y={y + 4}
               fontSize="11"
               textAnchor="end"
-              fill="#64748b"
+              fill="var(--color-chart-tick)"
             >
               {formatYValue(valueAtLine)}
             </text>
@@ -239,7 +243,7 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
               y={padding.top + plotH - hA}
               width={barW}
               height={hA}
-              fill="#6366f1"
+              fill="var(--color-chart-a)"
               rx="3"
             />
             <rect
@@ -247,7 +251,7 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
               y={padding.top + plotH - hB}
               width={barW}
               height={hB}
-              fill="#a78bfa"
+              fill="var(--color-chart-b)"
               rx="3"
             />
           </g>
@@ -263,7 +267,7 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
             y={height - padding.bottom + 15}
             fontSize="11"
             textAnchor="middle"
-            fill="#64748b"
+            fill="var(--color-chart-tick)"
           >
             {d.month}
           </text>
@@ -273,13 +277,13 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
   )
 }
 
-export default function AnalyticsPage() {
-  return (
-    <div className="analytics">
-      <h1 className="analytics__title">Аналитика</h1>
+function AnalyticsPageContent({ data }: { data: AnalyticsPageData }) {
+  const { kpi, categories, partnerCompare, insights } = data
 
+  return (
+    <>
       <div className="kpi-grid">
-        {mockAnalyticsKpi.map((k) => (
+        {kpi.map((k) => (
           <div key={k.id} className="kpi">
             <div className="kpi__label">{k.label}</div>
             <div className="kpi__value">{k.value}</div>
@@ -289,15 +293,15 @@ export default function AnalyticsPage() {
       </div>
 
       <Card title="Динамика расходов по месяцам">
-        <DoubleLineChart data={mockPartnerCompare} />
+        <DoubleLineChart data={partnerCompare} />
       </Card>
 
       <div className="analytics__grid-2">
         <Card title="Распределение по категориям">
           <div className="pie-wrap">
-            <PieChart data={mockCategories} />
+            <PieChart data={categories} />
             <div className="pie-legend">
-              {mockCategories.map((c) => (
+              {categories.map((c) => (
                 <div key={c.name} className="pie-legend__item">
                   <span
                     className="pie-legend__dot"
@@ -314,21 +318,21 @@ export default function AnalyticsPage() {
         </Card>
 
         <Card title="Сравнение трат партнёров">
-          <BarChart data={mockPartnerCompare} />
+          <BarChart data={partnerCompare} />
           <div className="bar-legend">
             <span>
               <span
                 className="bar-legend__dot"
-                style={{ background: '#6366f1' }}
+                style={{ background: 'var(--color-chart-a)' }}
               />{' '}
-              Партнёр А
+              {partnerAShortName}
             </span>
             <span>
               <span
                 className="bar-legend__dot"
-                style={{ background: '#a78bfa' }}
+                style={{ background: 'var(--color-chart-b)' }}
               />{' '}
-              Партнёр Б
+              {partnerBShortName}
             </span>
           </div>
         </Card>
@@ -336,14 +340,35 @@ export default function AnalyticsPage() {
 
       <Card title="💡 Инсайты и рекомендации">
         <div className="insights">
-          {mockInsights.map((i) => (
-            <div key={i.id} className="insight">
-              <div className="insight__title">{i.title}</div>
-              <div className="insight__text">{i.text}</div>
+          {insights.map((item) => (
+            <div key={item.id} className="insight">
+              <div className="insight__title">{item.title}</div>
+              <div className="insight__text">{item.text}</div>
             </div>
           ))}
         </div>
       </Card>
+    </>
+  )
+}
+
+export default function AnalyticsPage() {
+  const { data, status, error, refetch } = useAsyncData('analytics', () =>
+    loadAnalyticsPageData()
+  )
+
+  return (
+    <div className="analytics">
+      <h1 className="analytics__title">Аналитика</h1>
+
+      <AsyncDataView
+        status={status}
+        error={error}
+        onRetry={refetch}
+        loadingLabel="Загружаем аналитику…"
+      >
+        {data ? <AnalyticsPageContent data={data} /> : null}
+      </AsyncDataView>
     </div>
   )
 }

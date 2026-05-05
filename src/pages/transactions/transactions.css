@@ -1,19 +1,18 @@
 .transactions {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .transactions__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
 }
 
 .transactions__title {
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 32px;
+  font: var(--font-h1);
   color: var(--color-text);
 }
 
@@ -38,22 +37,31 @@
   border-radius: var(--radius-input);
   padding: 0 16px;
   height: 44px;
+  box-sizing: border-box;
 }
 
 .filter-input__icon {
-  color: var(--color-text-muted);
+  width: 20px;
+  height: 20px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
   flex-shrink: 0;
+  color: var(--color-text-muted);
+  display: block;
 }
 
 .filter-input__control {
   flex: 1;
+  width: 100%;
+  min-width: 0;
   border: none;
   background: transparent;
   outline: none;
-  font-family: inherit;
-  font-size: 14px;
+  font: var(--font-body);
   color: var(--color-text);
-  width: 100%;
+  box-sizing: border-box;
+  line-height: 24px;
 }
 
 .filter-input__control::placeholder {
@@ -62,7 +70,7 @@
 
 .transactions__summary {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -81,8 +89,8 @@
 }
 
 .summary-card__label {
-  font-size: 14px;
-  color: var(--color-text-muted);
+  font: var(--font-h3);
+  color: var(--color-text);
   margin-bottom: 8px;
 }
 
@@ -102,13 +110,13 @@
 }
 
 .summary-card__hint {
-  margin-top: 6px;
-  font-size: 13px;
+  margin-top: 8px;
+  font: var(--font-body);
   color: var(--color-text-muted);
 }
 
 .summary-card__hint--accent {
-  color: var(--color-success);
+  color: var(--color-primary);
 }
 
 .tx-list {
@@ -138,7 +146,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--color-primary-10);
   color: var(--color-primary);
   display: flex;
   align-items: center;
@@ -160,19 +168,19 @@
 }
 
 .tx-row__category {
-  font-weight: 500;
-  font-size: 15px;
+  font: var(--font-body);
+  font-weight: 700;
   color: var(--color-text);
 }
 
 .tx-row__date {
-  font-size: 13px;
+  font: var(--font-body);
   color: var(--color-text-muted);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .tx-row__amount {
-  font-size: 15px;
+  font: var(--font-body);
   font-weight: 600;
   color: var(--color-text);
 }
@@ -197,7 +205,7 @@
   border: none;
   padding: 8px 12px;
   border-radius: 8px;
-  font-size: 14px;
+  font: var(--font-body);
   color: var(--color-text-secondary);
   display: inline-flex;
   align-items: center;
@@ -208,14 +216,167 @@
 
 .pagination__btn:hover,
 .pagination__page:hover {
-  background: rgba(99, 102, 241, 0.08);
+  background: var(--color-primary-08);
 }
 
 .pagination__page--active {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-text-on-primary);
 }
 
 .pagination__page--active:hover {
   background: var(--color-primary-hover);
+}
+
+/* FORM */
+
+.transactions-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.transactions-form__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.transactions-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+  align-self: start;
+}
+
+.transactions-form__label {
+  font: var(--font-body);
+  font-weight: 500;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* Единый размер для всех контролов */
+.transactions-form input,
+.transactions-form select,
+.transactions-form .input,
+.transactions-form .input__field,
+.transactions-form .input__control,
+.transactions-form__select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  font: var(--font-body);
+}
+
+/* Обёртка Input */
+.transactions-form .input {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Если внутри Input есть поле */
+.transactions-form .input__control {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+/* Реальные поля */
+.transactions-form input,
+.transactions-form select,
+.transactions-form .input__field,
+.transactions-form__select {
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  outline: none;
+  box-sizing: border-box;
+  font: var(--font-body);
+  line-height: 24px;
+  vertical-align: top;
+}
+
+/* Select */
+.transactions-form select,
+.transactions-form__select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* Placeholder */
+.transactions-form input::placeholder,
+.transactions-form .input__field::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+/* Focus */
+.transactions-form input:focus,
+.transactions-form select:focus,
+.transactions-form .input__field:focus,
+.transactions-form__select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-12);
+}
+
+/* Options */
+.transactions-form__select option,
+.transactions-form select option {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+/* Errors */
+.transactions-form__error {
+  margin-top: -2px;
+  font: var(--font-body);
+  color: var(--color-error-input);
+}
+
+.transactions-form__select--error,
+.transactions-form .input__field[aria-invalid='true'],
+.transactions-form input[aria-invalid='true'],
+.transactions-form select[aria-invalid='true'] {
+  border-color: var(--color-error-input);
+}
+
+.transactions-form__select--error:focus,
+.transactions-form .input__field[aria-invalid='true']:focus,
+.transactions-form input[aria-invalid='true']:focus,
+.transactions-form select[aria-invalid='true']:focus {
+  border-color: var(--color-error-input);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.transactions-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (max-width: 800px) {
+  .transactions-form__row {
+    grid-template-columns: 1fr;
+  }
+
+  .transactions-form__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
 }

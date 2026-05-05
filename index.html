@@ -10,6 +10,23 @@
       rel="stylesheet"
     />
     <title>FinPair</title>
+    <script>
+      ;(function () {
+        try {
+          var k = 'finpair-theme'
+          var s = localStorage.getItem(k)
+          var dark
+          if (s === 'dark' || s === 'light') {
+            dark = s === 'dark'
+          } else {
+            dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          }
+          if (dark) document.documentElement.setAttribute('data-theme', 'dark')
+          else document.documentElement.removeAttribute('data-theme')
+        } catch (e) {
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

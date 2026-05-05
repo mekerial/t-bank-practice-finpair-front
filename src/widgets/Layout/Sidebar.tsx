@@ -1,11 +1,33 @@
 import { NavLink } from 'react-router-dom'
-import { NAV_ITEMS } from '../../shared/config/routes'
+import { logout, logoutUser, useAppDispatch, useAppSelector } from '../../app/store'
+import { NAV_ITEMS, ROUTES } from '../../shared/config/routes'
 import { APP_NAME } from '../../shared/constants/app'
-import { mockUser } from '../../shared/lib/mocks'
+
+function initials(name: string) {
+  return name
+    .split(/[\s@]/)
+    .map((w) => w[0])
+    .filter(Boolean)
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+}
 
 export default function Sidebar() {
+  const dispatch = useAppDispatch()
+  const user = useAppSelector((s) => s.auth.user)
+
+  const displayName = user?.displayName ?? user?.email ?? ''
+
+  const handleLogout = () => {
+    dispatch(logoutUser())
+      .unwrap()
+      .catch(() => {})
+      .finally(() => dispatch(logout()))
+  }
+
   return (
-    <aside className="sidebar">
+    <aside className={'sidebar' + (user ? '' : ' sidebar--guest')}>
       <div className="sidebar__top">
         <div className="sidebar__brand">{APP_NAME}</div>
         <div className="sidebar__subtitle">Финансы вдвоём</div>
@@ -31,17 +53,37 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar__user">
-        <div className="sidebar__avatar">
-          {mockUser.name
-            .split(' ')
-            .map((w) => w[0])
-            .join('')
-            .slice(0, 2)}
-        </div>
-        <div className="sidebar__user-info">
-          <div className="sidebar__user-name">{mockUser.name}</div>
-          <div className="sidebar__user-email">{mockUser.email}</div>
-        </div>
+        {user ? (
+          <>
+            <div className="sidebar__avatar">{initials(displayName)}</div>
+            <div className="sidebar__user-info">
+              <div className="sidebar__user-name">{displayName}</div>
+              <div className="sidebar__user-email">{user.email}</div>
+              <button
+                type="button"
+                className="sidebar__logout"
+                onClick={handleLogout}
+              >
+                Выйти
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="sidebar__guest">
+            <p className="sidebar__guest-hint">
+              Войдите, чтобы увидеть суммы, графики и сохранять изменения.
+            </p>
+            <NavLink to={ROUTES.LOGIN} className="sidebar__guest-btn">
+              Войти
+            </NavLink>
+            <NavLink
+              to={ROUTES.REGISTER}
+              className="sidebar__guest-btn sidebar__guest-btn--secondary"
+            >
+              Регистрация
+            </NavLink>
+          </div>
+        )}
       </div>
     </aside>
   )

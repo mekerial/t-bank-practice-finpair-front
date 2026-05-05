@@ -1,21 +1,36 @@
 .dashboard {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+}
+
+/* Карточки на дашборде — как в макете: мягкая тень, 16px скругление */
+.dashboard .card {
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 14px rgba(26, 28, 35, 0.06);
+}
+
+.dashboard .card__header {
+  margin-bottom: 22px;
+}
+
+.dashboard .card__title {
+  font: var(--font-h3);
+  letter-spacing: -0.01em;
+  color: var(--color-text);
 }
 
 .dashboard__title {
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 32px;
+  font: var(--font-h1);
+  letter-spacing: -0.02em;
   color: var(--color-text);
-  margin-bottom: 4px;
+  margin: 0 0 8px;
 }
 
 .dashboard__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 24px;
 }
 
 @media (max-width: 960px) {
@@ -28,7 +43,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .donut {
@@ -40,7 +55,7 @@
   gap: 24px;
   flex-wrap: wrap;
   justify-content: center;
-  font-size: 14px;
+  font: var(--font-body);
   color: var(--color-text-secondary);
 }
 
@@ -66,7 +81,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 0;
+  padding: 18px 0;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -75,13 +90,14 @@
 }
 
 .overview__label {
+  font: var(--font-body);
   color: var(--color-text-secondary);
-  font-size: 15px;
 }
 
 .overview__value {
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
+  line-height: 28px;
   color: var(--color-text);
 }
 
@@ -96,32 +112,28 @@
 }
 
 .overview__sub {
-  font-size: 13px;
+  font: var(--font-body);
   color: var(--color-text-muted);
 }
 
 .smart-balance {
-  background: linear-gradient(
-    180deg,
-    rgba(139, 92, 246, 0.08),
-    rgba(99, 102, 241, 0.06)
-  ) !important;
-  border-color: rgba(139, 92, 246, 0.25) !important;
+  background: var(--color-smart-balance-bg) !important;
+  border-color: var(--color-primary-22) !important;
 }
 
 .smart-balance__header {
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .smart-balance__bulb {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(139, 92, 246, 0.15);
-  color: #8b5cf6;
+  background: var(--color-primary-15);
+  color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -129,21 +141,20 @@
 }
 
 .smart-balance__title {
-  font-size: 18px;
-  font-weight: 600;
+  font: var(--font-h4);
   color: var(--color-text);
 }
 
 .smart-balance__subtitle {
-  font-size: 14px;
+  font: var(--font-body);
   color: var(--color-text-muted);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .smart-balance__list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .smart-balance__item {
@@ -152,9 +163,9 @@
   gap: 14px;
   background: var(--color-surface-alt);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
-  font-size: 14px;
+  border-radius: 999px;
+  padding: 14px 18px;
+  font: var(--font-body);
   color: var(--color-text);
 }
 
@@ -162,7 +173,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(99, 102, 241, 0.15);
+  background: var(--color-primary-15);
   color: var(--color-primary);
   display: inline-flex;
   align-items: center;
@@ -182,7 +193,7 @@
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
   gap: 16px;
-  padding: 14px 0;
+  padding: 16px 0;
   align-items: center;
   border-bottom: 1px solid var(--color-border);
 }
@@ -192,13 +203,14 @@
 }
 
 .expenses-table__head {
-  font-size: 13px;
-  color: var(--color-text-muted);
+  font: var(--font-body);
+  font-weight: 600;
+  color: var(--color-text-secondary);
   text-transform: none;
-  font-weight: 500;
 }
 
 .expenses-table__category {
+  font: var(--font-body);
   font-weight: 500;
   color: var(--color-text);
 }
@@ -219,11 +231,11 @@
 }
 
 .chip--partner {
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--color-primary-10);
   color: var(--color-primary);
 }
 
 .chip--shared {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
+  background: var(--color-primary-12);
+  color: var(--color-primary-muted);
 }

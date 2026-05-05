@@ -1,0 +1,34 @@
+.not-found {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 32px;
+  background: var(--color-bg);
+}
+
+.not-found__theme {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1;
+}
+
+.not-found__inner {
+  text-align: center;
+}
+
+.not-found__code {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+
+.not-found__text {
+  font: var(--font-body);
+  color: var(--color-text-muted);
+}

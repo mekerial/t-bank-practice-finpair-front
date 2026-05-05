@@ -1,6 +1,9 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { loginUser, useAppDispatch, useAppSelector } from '../../app/store'
 import { ROUTES } from '../../shared/config/routes'
+import { getErrorMessage } from '../../shared/lib/asyncUtils'
 import Input from '../../shared/ui/Input'
 import Button from '../../shared/ui/Button'
 import './auth.css'
@@ -11,16 +14,36 @@ interface LoginForm {
 }
 
 export default function LoginPage() {
-  const [form, setForm] = useState<LoginForm>({ email: '', password: '' })
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  const user = useAppSelector((s) => s.auth.user)
+  const [formError, setFormError] = useState('')
 
-  const handleChange =
-    (field: keyof LoginForm) => (event: ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [field]: event.target.value }))
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting }
+  } = useForm<LoginForm>({
+    defaultValues: { email: '', password: '' },
+    mode: 'onSubmit'
+  })
+
+  const onSubmit = async (data: LoginForm) => {
+    setFormError('')
+    try {
+      await dispatch(loginUser(data)).unwrap()
+      navigate(ROUTES.DASHBOARD, { replace: true })
+    } catch (e) {
+      setFormError(typeof e === 'string' ? e : getErrorMessage(e))
     }
+  }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    console.log('login submit', form)
+  const onInvalid = () => {
+    setFormError('Заполните все обязательные поля')
+  }
+
+  if (user) {
+    return <Navigate to={ROUTES.DASHBOARD} replace />
   }
 
   return (
@@ -45,30 +68,72 @@ export default function LoginPage() {
         <h2 className="auth-form__title">Вход</h2>
       </div>
 
-      <form className="auth-form__form" onSubmit={handleSubmit}>
-        <Input
-          id="email"
-          label="Email"
-          type="email"
-          placeholder="your@email.com"
-          value={form.email}
-          onChange={handleChange('email')}
-          autoComplete="email"
-          required
-        />
-        <Input
-          id="password"
-          label="Пароль"
-          type="password"
-          placeholder="Ваш пароль"
-          value={form.password}
-          onChange={handleChange('password')}
-          autoComplete="current-password"
-          required
-        />
+      <form
+        className="auth-form__form"
+        onSubmit={handleSubmit(onSubmit, onInvalid)}
+        noValidate
+      >
+        {formError && (
+          <p className="auth-form__common-error">{formError}</p>
+        )}
 
-        <Button type="submit" fullWidth>
-          Войти
+        <Controller
+          name="email"
+          control={control}
+          rules={{
+            required: 'Введите email',
+            pattern: { value: /\S+@\S+\.\S+/, message: 'Некорректный email' }
+          }}
+          render={({ field }) => (
+            <Input
+              id="email"
+              label="Email"
+              type="email"
+              placeholder="your@email.com"
+              autoComplete="email"
+              aria-invalid={errors.email ? 'true' : 'false'}
+              {...field}
+            />
+          )}
+        />
+        {errors.email && (
+          <p className="auth-form__error">{errors.email.message}</p>
+        )}
+
+        <Controller
+          name="password"
+          control={control}
+          rules={{
+            required: 'Введите пароль',
+            minLength: { value: 8, message: 'Минимум 8 символов' },
+            validate: (value) => {
+              if (!/[a-zA-Zа-яА-ЯёЁ]/.test(value)) {
+                return 'Нужна хотя бы одна буква'
+              }
+              if (!/\d/.test(value)) {
+                return 'Нужна хотя бы одна цифра'
+              }
+              return true
+            }
+          }}
+          render={({ field }) => (
+            <Input
+              id="password"
+              label="Пароль"
+              type="password"
+              placeholder="Ваш пароль"
+              autoComplete="current-password"
+              aria-invalid={errors.password ? 'true' : 'false'}
+              {...field}
+            />
+          )}
+        />
+        {errors.password && (
+          <p className="auth-form__error">{errors.password.message}</p>
+        )}
+
+        <Button type="submit" fullWidth disabled={isSubmitting}>
+          {isSubmitting ? 'Входим…' : 'Войти'}
         </Button>
       </form>
 
