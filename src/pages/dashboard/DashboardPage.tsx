@@ -1,14 +1,18 @@
 import Card from '../../shared/ui/Card'
+import axios from 'axios'
 import { IconBulb } from '../../shared/ui/icons'
 import {
-  formatMoneyPlain,
-  partnerAShortName,
-  partnerBShortName
-} from '../../shared/lib/mocks'
+  formatMoneyPlain
+} from '../../shared/lib/financeView'
+import { isValidHouseholdId } from '../../shared/lib/householdId'
 import { useAsyncData } from '../../shared/hooks/useAsyncData'
-import { loadDashboardPageData } from '../../shared/lib/mockPageLoaders'
-import type { DashboardPageData } from '../../shared/lib/mockPageLoaders'
+import {
+  fetchDashboard,
+  type DashboardPageData
+} from '../../shared/api/dashboardApi'
 import AsyncDataView from '../../shared/ui/AsyncDataView'
+import { fetchCoupleRequest } from '../../shared/api/settingsApi'
+import type { CoupleDetails } from '../../shared/api/settingsApi'
 import './dashboard.css'
 
 interface DonutChartProps {
@@ -52,10 +56,26 @@ function DonutChart({ a }: DonutChartProps) {
   )
 }
 
-function DashboardContent({ data }: { data: DashboardPageData }) {
+function DashboardContent({
+  data,
+  partnerALabel,
+  partnerBLabel,
+  memberNameById
+}: {
+  data: DashboardPageData
+  partnerALabel: string
+  partnerBLabel: string
+  memberNameById: Map<string, string>
+}) {
   const { financialLoad, recommendations, mainExpenses } = data
   const { totalIncome, balance, loadPercent, totalExpense, partnerSplit } =
     financialLoad
+  const isOverloaded = totalExpense > totalIncome && totalIncome > 0
+  const loadPercentDisplay = Math.min(Math.max(loadPercent, 0), 100)
+  const overloadAmount = Math.max(totalExpense - totalIncome, 0)
+  const loadHintLabel = isOverloaded
+    ? `перерасход: ${formatMoneyPlain(overloadAmount)}`
+    : formatMoneyPlain(totalExpense)
 
   return (
     <>
@@ -69,14 +89,14 @@ function DashboardContent({ data }: { data: DashboardPageData }) {
                   className="dashboard__dot"
                   style={{ background: 'var(--color-chart-a)' }}
                 />
-                {partnerAShortName}: {partnerSplit.a}%
+                {partnerALabel}: {partnerSplit.a}%
               </span>
               <span className="dashboard__legend-item">
                 <span
                   className="dashboard__dot"
                   style={{ background: 'var(--color-chart-b)' }}
                 />
-                {partnerBShortName}: {partnerSplit.b}%
+                {partnerBLabel}: {partnerSplit.b}%
               </span>
             </div>
           </div>
@@ -93,9 +113,9 @@ function DashboardContent({ data }: { data: DashboardPageData }) {
             <div className="overview__row">
               <span className="overview__label">Финансовая нагрузка</span>
               <div className="overview__value-stack">
-                <span className="overview__value">{loadPercent}%</span>
+                <span className="overview__value">{loadPercentDisplay}%</span>
                 <span className="overview__sub">
-                  {formatMoneyPlain(totalExpense)}
+                  {loadHintLabel}
                 </span>
               </div>
             </div>
@@ -143,7 +163,7 @@ function DashboardContent({ data }: { data: DashboardPageData }) {
             <span className="expenses-table__right">Из бюджета</span>
           </div>
           {mainExpenses.map((e) => (
-            <div key={e.id} className="expenses-table__row">
+            <div key={`${e.id}-${e.userId ?? e.payer}`} className="expenses-table__row">
               <span className="expenses-table__category">{e.category}</span>
               <span>{formatMoneyPlain(e.amount)}</span>
               <span>
@@ -153,7 +173,10 @@ function DashboardContent({ data }: { data: DashboardPageData }) {
                     (e.payer === 'Общий' ? 'chip--shared' : 'chip--partner')
                   }
                 >
-                  {e.payer}
+                  {e.userId
+                    ? (memberNameById.get(e.userId) ??
+                      (e.payer === 'А' ? partnerALabel : partnerBLabel))
+                    : e.payer}
                 </span>
               </span>
               <span>{e.share}%</span>
@@ -169,10 +192,48 @@ function DashboardContent({ data }: { data: DashboardPageData }) {
 }
 
 export default function DashboardPage() {
-  const { data, status, error, refetch } = useAsyncData('dashboard', () =>
-    loadDashboardPageData()
+  const emptyCouple: CoupleDetails = {
+    id: '',
+    inviteCode: '',
+    currency: 'RUB',
+    splitType: 'equal',
+    notifications: {},
+    members: [],
+    users: []
+  }
+  const { data: coupleData } = useAsyncData('dashboard-couple', async () => {
+    try {
+      return await fetchCoupleRequest()
+    } catch (e) {
+      if (axios.isAxiosError(e) && e.response?.status === 404) return emptyCouple
+      throw e
+    }
+  })
+  const householdKey = coupleData?.id
+  const { data, status, error, refetch } = useAsyncData(
+    `dashboard-${isValidHouseholdId(householdKey) ? householdKey : 'no-couple'}`,
+    () =>
+      isValidHouseholdId(householdKey)
+        ? fetchDashboard()
+        : Promise.resolve({
+            financialLoad: {
+              totalIncome: 0,
+              totalExpense: 0,
+              balance: 0,
+              loadPercent: 0,
+              partnerSplit: { a: 0, b: 0 }
+            },
+            recommendations: [],
+            mainExpenses: [],
+            partnerStats: []
+          })
   )
-
+  const members = coupleData?.members ?? coupleData?.users ?? []
+  const memberNameById = new Map<string, string>(
+    members.map((m) => [m.userId, m.name])
+  )
+  const partnerALabel = members[0]?.name ?? 'Партнер A'
+  const partnerBLabel = members[1]?.name ?? 'Партнер B'
   return (
     <div className="dashboard">
       <h1 className="dashboard__title">Финансовая нагрузка</h1>
@@ -183,7 +244,14 @@ export default function DashboardPage() {
         onRetry={refetch}
         loadingLabel="Загружаем дашборд…"
       >
-        {data ? <DashboardContent data={data} /> : null}
+        {data ? (
+          <DashboardContent
+            data={data}
+            partnerALabel={partnerALabel}
+            partnerBLabel={partnerBLabel}
+            memberNameById={memberNameById}
+          />
+        ) : null}
       </AsyncDataView>
     </div>
   )

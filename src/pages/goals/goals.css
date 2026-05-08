@@ -363,6 +363,33 @@
   line-height: 16px;
 }
 
+.goal-card__actions {
+  margin-top: 14px;
+}
+
+.goal-card__action-btn {
+  width: 100%;
+  border: 1px solid var(--color-primary-35);
+  background: var(--color-primary-06);
+  color: var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.goal-card__action-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-12);
+}
+
+.goal-card__action-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
 .goals__summary {
   display: none;
 }

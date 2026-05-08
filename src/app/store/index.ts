@@ -14,4 +14,9 @@ export {
   createTransaction,
   clearCreateTransactionError
 } from './slices/transactionsSlice'
-export { fetchGoals, createGoal, clearCreateGoalError } from './slices/goalsSlice'
+export {
+  fetchGoals,
+  createGoal,
+  clearCreateGoalError,
+  setMainGoal
+} from './slices/goalsSlice'

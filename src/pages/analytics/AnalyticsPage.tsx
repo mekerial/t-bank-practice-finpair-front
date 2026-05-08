@@ -1,36 +1,53 @@
 import Card from '../../shared/ui/Card'
+import axios from 'axios'
 import {
   formatMoneyPlain,
-  partnerAShortName,
-  partnerBShortName,
   type CategorySlice,
   type PartnerComparePoint
-} from '../../shared/lib/mocks'
-import type { AnalyticsPageData } from '../../shared/lib/mockPageLoaders'
-import { loadAnalyticsPageData } from '../../shared/lib/mockPageLoaders'
+} from '../../shared/lib/financeView'
+import { isValidHouseholdId } from '../../shared/lib/householdId'
+import {
+  fetchAnalyticsPageData,
+  type AnalyticsPageData
+} from '../../shared/api/analyticsApi'
 import { useAsyncData } from '../../shared/hooks/useAsyncData'
 import AsyncDataView from '../../shared/ui/AsyncDataView'
+import { fetchCoupleRequest } from '../../shared/api/settingsApi'
+import type { CoupleDetails } from '../../shared/api/settingsApi'
 import './analytics.css'
 
-function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
+function DoubleLineChart({
+  data,
+  partnerALabel,
+  partnerBLabel
+}: {
+  data: PartnerComparePoint[]
+  partnerALabel: string
+  partnerBLabel: string
+}) {
+  if (data.length === 0) {
+    return <p>Нет данных для графика</p>
+  }
+
   const width = 800
   const height = 260
   const padding = { top: 20, right: 16, bottom: 30, left: 50 }
-  const max = Math.max(...data.flatMap((d) => [d.a, d.b]))
+  const max = Math.max(...data.flatMap((d) => [d.a, d.b]), 0)
   const min = 0
+  const denominator = Math.max(max - min, 1)
   const xStep =
     (width - padding.left - padding.right) / Math.max(1, data.length - 1)
   const yRange = height - padding.top - padding.bottom
 
   const pointsA = data.map((d, i) => {
     const x = padding.left + i * xStep
-    const y = padding.top + yRange - ((d.a - min) / (max - min)) * yRange
+    const y = padding.top + yRange - ((d.a - min) / denominator) * yRange
     return { x, y, month: d.month, value: d.a }
   })
 
   const pointsB = data.map((d, i) => {
     const x = padding.left + i * xStep
-    const y = padding.top + yRange - ((d.b - min) / (max - min)) * yRange
+    const y = padding.top + yRange - ((d.b - min) / denominator) * yRange
     return { x, y, month: d.month, value: d.b }
   })
 
@@ -94,12 +111,12 @@ function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
         <path d={pathA} fill="none" stroke="var(--color-chart-a)" strokeWidth="2.5" />
         <path d={pathB} fill="none" stroke="var(--color-chart-b)" strokeWidth="2.5" />
 
-        {pointsA.map((p) => (
-          <circle key={`a-${p.month}`} cx={p.x} cy={p.y} r="4" fill="var(--color-chart-a)" stroke="#fff" strokeWidth="1.5" />
+        {pointsA.map((p, i) => (
+          <circle key={`a-${i}`} cx={p.x} cy={p.y} r="4" fill="var(--color-chart-a)" stroke="#fff" strokeWidth="1.5" />
         ))}
 
-        {pointsB.map((p) => (
-          <circle key={`b-${p.month}`} cx={p.x} cy={p.y} r="4" fill="var(--color-chart-b)" stroke="#fff" strokeWidth="1.5" />
+        {pointsB.map((p, i) => (
+          <circle key={`b-${i}`} cx={p.x} cy={p.y} r="4" fill="var(--color-chart-b)" stroke="#fff" strokeWidth="1.5" />
         ))}
 
         {pointsA.map((p, i) => (
@@ -119,11 +136,11 @@ function DoubleLineChart({ data }: { data: PartnerComparePoint[] }) {
       <div className="bar-legend">
         <span>
           <span className="bar-legend__dot" style={{ background: 'var(--color-chart-a)' }} />{' '}
-          {partnerAShortName}
+          {partnerALabel}
         </span>
         <span>
           <span className="bar-legend__dot" style={{ background: 'var(--color-chart-b)' }} />{' '}
-          {partnerBShortName}
+          {partnerBLabel}
         </span>
       </div>
     </div>
@@ -136,6 +153,18 @@ function PieChart({ data }: { data: CategorySlice[] }) {
   const cx = size / 2
   const cy = size / 2
   const total = data.reduce((s, d) => s + d.value, 0)
+  if (total <= 0) {
+    return <p>Нет данных по категориям</p>
+  }
+
+  if (data.length === 1) {
+    return (
+      <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
+        <circle cx={cx} cy={cy} r={r} fill={data[0].color} />
+      </svg>
+    )
+  }
+
   let cursor = 0
 
   const arcs = data.map((d) => {
@@ -164,14 +193,22 @@ function PieChart({ data }: { data: CategorySlice[] }) {
 }
 
 function BarChart({ data }: { data: PartnerComparePoint[] }) {
+  if (data.length === 0) {
+    return <p>Нет данных для сравнения</p>
+  }
+
+  const chartData = data.filter((d) => d.a > 0 || d.b > 0)
+  const source = chartData.length > 0 ? chartData : data
+
   const width = 500
   const height = 260
   const padding = { top: 20, right: 16, bottom: 30, left: 50 }
-  const max = Math.max(...data.flatMap((d) => [d.a, d.b]))
+  const max = Math.max(...source.flatMap((d) => [d.a, d.b]), 0)
   const min = 0
   const plotW = width - padding.left - padding.right
   const plotH = height - padding.top - padding.bottom
-  const groupW = plotW / data.length
+  const safeMax = Math.max(max, 1)
+  const groupW = plotW / source.length
   const barW = groupW / 3
 
   const formatYValue = (val: number) => {
@@ -232,10 +269,10 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
         )
       })}
 
-      {data.map((d, i) => {
+      {source.map((d, i) => {
         const baseX = padding.left + i * groupW + groupW / 2 - barW
-        const hA = (d.a / max) * plotH
-        const hB = (d.b / max) * plotH
+        const hA = (d.a / safeMax) * plotH
+        const hB = (d.b / safeMax) * plotH
         return (
           <g key={d.month}>
             <rect
@@ -258,7 +295,7 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
         )
       })}
 
-      {data.map((d, i) => {
+      {source.map((d, i) => {
         const baseX = padding.left + i * groupW + groupW / 2
         return (
           <text
@@ -277,7 +314,15 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
   )
 }
 
-function AnalyticsPageContent({ data }: { data: AnalyticsPageData }) {
+function AnalyticsPageContent({
+  data,
+  partnerALabel,
+  partnerBLabel
+}: {
+  data: AnalyticsPageData
+  partnerALabel: string
+  partnerBLabel: string
+}) {
   const { kpi, categories, partnerCompare, insights } = data
 
   return (
@@ -293,7 +338,11 @@ function AnalyticsPageContent({ data }: { data: AnalyticsPageData }) {
       </div>
 
       <Card title="Динамика расходов по месяцам">
-        <DoubleLineChart data={partnerCompare} />
+        <DoubleLineChart
+          data={partnerCompare}
+          partnerALabel={partnerALabel}
+          partnerBLabel={partnerBLabel}
+        />
       </Card>
 
       <div className="analytics__grid-2">
@@ -301,8 +350,8 @@ function AnalyticsPageContent({ data }: { data: AnalyticsPageData }) {
           <div className="pie-wrap">
             <PieChart data={categories} />
             <div className="pie-legend">
-              {categories.map((c) => (
-                <div key={c.name} className="pie-legend__item">
+              {categories.map((c, i) => (
+                <div key={`${c.name}-${i}`} className="pie-legend__item">
                   <span
                     className="pie-legend__dot"
                     style={{ background: c.color }}
@@ -325,14 +374,14 @@ function AnalyticsPageContent({ data }: { data: AnalyticsPageData }) {
                 className="bar-legend__dot"
                 style={{ background: 'var(--color-chart-a)' }}
               />{' '}
-              {partnerAShortName}
+              {partnerALabel}
             </span>
             <span>
               <span
                 className="bar-legend__dot"
                 style={{ background: 'var(--color-chart-b)' }}
               />{' '}
-              {partnerBShortName}
+              {partnerBLabel}
             </span>
           </div>
         </Card>
@@ -340,10 +389,15 @@ function AnalyticsPageContent({ data }: { data: AnalyticsPageData }) {
 
       <Card title="💡 Инсайты и рекомендации">
         <div className="insights">
-          {insights.map((item) => (
+          {insights.map((item, index) => (
             <div key={item.id} className="insight">
-              <div className="insight__title">{item.title}</div>
-              <div className="insight__text">{item.text}</div>
+              <span className="insight__index">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <div className="insight__content">
+                <div className="insight__title">{item.title}</div>
+                <div className="insight__text">{item.text}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -353,10 +407,43 @@ function AnalyticsPageContent({ data }: { data: AnalyticsPageData }) {
 }
 
 export default function AnalyticsPage() {
-  const { data, status, error, refetch } = useAsyncData('analytics', () =>
-    loadAnalyticsPageData()
+  const emptyCouple: CoupleDetails = {
+    id: '',
+    inviteCode: '',
+    currency: 'RUB',
+    splitType: 'equal',
+    notifications: {},
+    members: [],
+    users: []
+  }
+  const emptyAnalytics: AnalyticsPageData = {
+    kpi: [],
+    categories: [],
+    partnerCompare: [],
+    insights: []
+  }
+  const { data: coupleData } = useAsyncData(
+    'analytics-couple',
+    async () => {
+      try {
+        return await fetchCoupleRequest()
+      } catch (e) {
+        if (axios.isAxiosError(e) && e.response?.status === 404) return emptyCouple
+        throw e
+      }
+    }
   )
-
+  const analyticsHouseholdKey = coupleData?.id
+  const { data, status, error, refetch } = useAsyncData(
+    `analytics-${isValidHouseholdId(analyticsHouseholdKey) ? analyticsHouseholdKey : 'no-couple'}`,
+    () =>
+      isValidHouseholdId(analyticsHouseholdKey)
+        ? fetchAnalyticsPageData()
+        : Promise.resolve(emptyAnalytics)
+  )
+  const members = coupleData?.members ?? coupleData?.users ?? []
+  const partnerALabel = members[0]?.name ?? 'Партнер A'
+  const partnerBLabel = members[1]?.name ?? 'Партнер B'
   return (
     <div className="analytics">
       <h1 className="analytics__title">Аналитика</h1>
@@ -367,7 +454,13 @@ export default function AnalyticsPage() {
         onRetry={refetch}
         loadingLabel="Загружаем аналитику…"
       >
-        {data ? <AnalyticsPageContent data={data} /> : null}
+        {data ? (
+          <AnalyticsPageContent
+            data={data}
+            partnerALabel={partnerALabel}
+            partnerBLabel={partnerBLabel}
+          />
+        ) : null}
       </AsyncDataView>
     </div>
   )

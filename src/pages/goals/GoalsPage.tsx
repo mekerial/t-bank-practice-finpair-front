@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
 import Card from '../../shared/ui/Card'
 import Button from '../../shared/ui/Button'
 import AsyncDataView from '../../shared/ui/AsyncDataView'
 import { IconPlus, IconGoals } from '../../shared/ui/icons'
-import { mockGoalTips, formatMoneyPlain } from '../../shared/lib/mocks'
+import { formatMoneyPlain } from '../../shared/lib/financeView'
+import { isValidHouseholdId } from '../../shared/lib/householdId'
 import {
   clearCreateGoalError,
   createGoal,
   fetchGoals,
+  setMainGoal,
   useAppDispatch,
   useAppSelector
 } from '../../app/store'
@@ -15,6 +18,9 @@ import type { Goal } from '../../app/store/slices/goalsSlice'
 import GoalCreateForm, {
   type GoalCreateFormValues
 } from './components/GoalCreateForm'
+import { useAsyncData } from '../../shared/hooks/useAsyncData'
+import { fetchCoupleRequest } from '../../shared/api/settingsApi'
+import type { CoupleDetails } from '../../shared/api/settingsApi'
 import './goals.css'
 
 type ProgressVariant = 'default' | 'light'
@@ -82,7 +88,13 @@ function getGoalEmoji(title: string) {
   return '🎯'
 }
 
-function GoalCard({ goal }: { goal: Goal }) {
+function GoalCard({
+  goal,
+  onSetMain
+}: {
+  goal: Goal
+  onSetMain: (goalId: Goal['id']) => void
+}) {
   const status = getGoalStatus(goal.percent)
 
   return (
@@ -131,6 +143,17 @@ function GoalCard({ goal }: { goal: Goal }) {
           </div>
         </div>
       </div>
+
+      <div className="goal-card__actions">
+        <button
+          type="button"
+          className="goal-card__action-btn"
+          onClick={() => onSetMain(goal.id)}
+          disabled={goal.isMain}
+        >
+          {goal.isMain ? 'Главная цель' : 'Сделать главной'}
+        </button>
+      </div>
     </div>
   )
 }
@@ -148,22 +171,74 @@ function getMonthsLeft(
   return Math.ceil(remaining / monthly)
 }
 
+function buildGoalTips(goals: Goal[]): Array<{ id: string; title: string; text: string }> {
+  if (goals.length === 0) return []
+  const avgProgress =
+    goals.reduce((acc, goal) => acc + goal.percent, 0) / goals.length
+  const topGoal = [...goals].sort((a, b) => b.remaining - a.remaining)[0]
+
+  return [
+    {
+      id: 'progress',
+      title: 'Средний прогресс',
+      text: `По всем целям сейчас ${Math.round(avgProgress)}%.`
+    },
+    {
+      id: 'focus',
+      title: 'Фокус месяца',
+      text: `Больше всего осталось по цели "${topGoal.title}" — ${formatMoneyPlain(
+        topGoal.remaining
+      )}.`
+    }
+  ]
+}
+
 export default function GoalsPage() {
   const dispatch = useAppDispatch()
   const { items: goals, status, error, createError } = useAppSelector((s) => s.goals)
+  const emptyCouple: CoupleDetails = {
+    id: '',
+    inviteCode: '',
+    currency: 'RUB',
+    splitType: 'equal',
+    notifications: {},
+    members: [],
+    users: []
+  }
+  const { data: coupleData } = useAsyncData(
+    'goals-couple',
+    async () => {
+      try {
+        return await fetchCoupleRequest()
+      } catch (e) {
+        if (axios.isAxiosError(e) && e.response?.status === 404) return emptyCouple
+        throw e
+      }
+    }
+  )
   const [isCreateOpen, setIsCreateOpen] = useState(false)
 
+  const goalsHouseholdId = coupleData?.id
   useEffect(() => {
-    if (status === 'idle') {
+    if (status === 'idle' && isValidHouseholdId(goalsHouseholdId)) {
       void dispatch(fetchGoals())
     }
-  }, [dispatch, status])
+  }, [dispatch, status, goalsHouseholdId])
+
+  useEffect(() => {
+    if (isValidHouseholdId(goalsHouseholdId)) {
+      void dispatch(fetchGoals())
+    }
+  }, [dispatch, goalsHouseholdId])
 
   const totalGoals = useMemo(() => goals.length, [goals])
-
+  const goalTips = useMemo(() => buildGoalTips(goals), [goals])
   const mainGoal = useMemo(() => {
-    return goals.find((goal) => goal.isMain) || goals[0]
+    return goals.find((goal) => goal.isMain)
   }, [goals])
+  const featuredGoal = useMemo(() => {
+    return mainGoal ?? goals[0]
+  }, [goals, mainGoal])
 
   const handleCloseCreate = () => {
     setIsCreateOpen(false)
@@ -176,8 +251,11 @@ export default function GoalsPage() {
       setIsCreateOpen(false)
     }
   }
+  const handleSetMainGoal = (goalId: Goal['id']) => {
+    dispatch(setMainGoal(goalId))
+  }
 
-  if (!mainGoal) {
+  if (!featuredGoal) {
     return (
       <div className="goals">
         <div className="goals__header">
@@ -216,11 +294,11 @@ export default function GoalsPage() {
   }
 
   const monthsLeft = getMonthsLeft(
-    mainGoal.target,
-    mainGoal.collected,
-    mainGoal.monthly
+    featuredGoal.target,
+    featuredGoal.collected,
+    featuredGoal.monthly
   )
-  const mainStatus = getGoalStatus(mainGoal.percent)
+  const mainStatus = getGoalStatus(featuredGoal.percent)
 
   return (
     <div className="goals">
@@ -266,37 +344,39 @@ export default function GoalsPage() {
         <div className="main-goal">
         <div className="main-goal__row">
           <div>
-            <div className="main-goal__label">Главная цель</div>
+            <div className="main-goal__label">
+              {mainGoal ? 'Главная цель' : 'Фокус сейчас'}
+            </div>
 
             <div className="main-goal__title-row">
               <span
                 className="main-goal__emoji"
                 role="img"
-                aria-label={mainGoal.title}
+                aria-label={featuredGoal.title}
               >
-                {getGoalEmoji(mainGoal.title)}
+                {getGoalEmoji(featuredGoal.title)}
               </span>
-              <div className="main-goal__title">{mainGoal.title}</div>
+              <div className="main-goal__title">{featuredGoal.title}</div>
             </div>
 
             <div className="main-goal__meta">
-              <span>📅 {mainGoal.deadline}</span>
-              <span>{formatMoneyPlain(mainGoal.monthly)}/мес</span>
+              <span>📅 {featuredGoal.deadline}</span>
+              <span>{formatMoneyPlain(featuredGoal.monthly)}/мес</span>
             </div>
           </div>
 
           <div className="main-goal__percent">
-            <div className="main-goal__percent-value">{mainGoal.percent}%</div>
+            <div className="main-goal__percent-value">{featuredGoal.percent}%</div>
             <div className="main-goal__percent-hint">достигнуто</div>
           </div>
         </div>
 
         <div className="main-goal__progress">
           <div className="main-goal__progress-top">
-            <span>{formatMoneyPlain(mainGoal.collected)}</span>
-            <span>{formatMoneyPlain(mainGoal.target)}</span>
+            <span>{formatMoneyPlain(featuredGoal.collected)}</span>
+            <span>{formatMoneyPlain(featuredGoal.target)}</span>
           </div>
-          <ProgressBar percent={mainGoal.percent} variant="light" />
+          <ProgressBar percent={featuredGoal.percent} variant="light" />
         </div>
 
         <div className="main-goal__status">
@@ -311,7 +391,7 @@ export default function GoalsPage() {
           <div className="main-goal__stat">
             <div className="main-goal__stat-label">Осталось</div>
             <div className="main-goal__stat-value">
-              {formatMoneyPlain(mainGoal.remaining)}
+              {formatMoneyPlain(featuredGoal.remaining)}
             </div>
           </div>
 
@@ -338,13 +418,13 @@ export default function GoalsPage() {
 
         <div className="goals__grid">
           {goals.map((goal) => (
-            <GoalCard key={goal.id} goal={goal} />
+            <GoalCard key={goal.id} goal={goal} onSetMain={handleSetMainGoal} />
           ))}
         </div>
 
         <Card title="💡 Советы по накоплению">
           <div className="goal-tips">
-            {mockGoalTips.map((t) => (
+            {goalTips.map((t) => (
               <div key={t.id} className="goal-tip">
                 <div className="goal-tip__title">{t.title}</div>
                 <div className="goal-tip__text">{t.text}</div>

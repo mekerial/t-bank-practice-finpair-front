@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import axios from 'axios'
 import { getErrorMessage } from '../../../shared/lib/asyncUtils'
 import {
   fetchGoalsRequest,
@@ -78,8 +79,11 @@ export const fetchGoals = createAsyncThunk<
 >('goals/fetchGoals', async (_, { rejectWithValue }) => {
   try {
     const apiGoals = await fetchGoalsRequest()
-    return apiGoals.map((g, i) => apiToGoal(g, i === 0))
+    return apiGoals.map((g) => apiToGoal(g, Boolean(g.isShared)))
   } catch (e) {
+    if (axios.isAxiosError(e) && e.response?.status === 404) {
+      return []
+    }
     return rejectWithValue(getErrorMessage(e))
   }
 })
@@ -106,10 +110,11 @@ export const createGoal = createAsyncThunk<
       targetAmount: target,
       currentAmount: collected,
       monthlyContribution: monthly,
-      deadline: payload.deadline || undefined
+      deadline: payload.deadline || undefined,
+      isShared: payload.isMain
     })
 
-    return apiToGoal(apiGoal, payload.isMain)
+    return apiToGoal(apiGoal, Boolean(apiGoal.isShared))
   } catch (e) {
     return rejectWithValue(getErrorMessage(e))
   }
@@ -121,10 +126,22 @@ const goalsSlice = createSlice({
   reducers: {
     clearCreateGoalError(state) {
       state.createError = null
+    },
+    setMainGoal(state, action: { payload: Goal['id'] }) {
+      const nextMainId = action.payload
+      state.items = state.items.map((goal) => ({
+        ...goal,
+        isMain: goal.id === nextMainId
+      }))
     }
   },
   extraReducers(builder) {
     builder
+      .addCase('auth/loginUser/fulfilled', () => initialState)
+      .addCase('auth/tryRestoreSession/fulfilled', () => initialState)
+      .addCase('auth/logoutUser/fulfilled', () => initialState)
+      .addCase('auth/logoutUser/rejected', () => initialState)
+      .addCase('auth/logout', () => initialState)
       .addCase(fetchGoals.pending, (state) => {
         state.status = 'loading'
         state.error = null
@@ -159,5 +176,5 @@ const goalsSlice = createSlice({
   }
 })
 
-export const { clearCreateGoalError } = goalsSlice.actions
+export const { clearCreateGoalError, setMainGoal } = goalsSlice.actions
 export default goalsSlice.reducer

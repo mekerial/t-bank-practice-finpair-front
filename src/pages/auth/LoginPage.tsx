@@ -1,4 +1,4 @@
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { loginUser, useAppDispatch, useAppSelector } from '../../app/store'
@@ -13,9 +13,16 @@ interface LoginForm {
   password: string
 }
 
+interface LoginPageLocationState {
+  registered?: boolean
+  email?: string
+}
+
 export default function LoginPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
+  const locationState = (location.state ?? {}) as LoginPageLocationState
   const user = useAppSelector((s) => s.auth.user)
   const [formError, setFormError] = useState('')
 
@@ -24,7 +31,10 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting }
   } = useForm<LoginForm>({
-    defaultValues: { email: '', password: '' },
+    defaultValues: {
+      email: locationState.registered ? locationState.email ?? '' : '',
+      password: ''
+    },
     mode: 'onSubmit'
   })
 
@@ -73,6 +83,11 @@ export default function LoginPage() {
         onSubmit={handleSubmit(onSubmit, onInvalid)}
         noValidate
       >
+        {locationState.registered && (
+          <p className="auth-form__info">
+            Аккаунт создан. Теперь войдите в систему, используя ваш email и пароль.
+          </p>
+        )}
         {formError && (
           <p className="auth-form__common-error">{formError}</p>
         )}

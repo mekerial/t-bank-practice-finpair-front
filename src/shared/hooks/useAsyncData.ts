@@ -9,9 +9,6 @@ export interface UseAsyncDataResult<T> {
   refetch: () => void
 }
 
-/**
- * Загружает данные при монтировании, при смене `cacheKey` и после refetch().
- */
 export function useAsyncData<T>(
   cacheKey: string | number,
   fetcher: () => Promise<T>

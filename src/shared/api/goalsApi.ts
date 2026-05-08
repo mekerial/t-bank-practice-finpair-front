@@ -7,6 +7,7 @@ export interface ApiGoal {
   currentAmount: number
   deadline?: string
   monthlyContribution?: number
+  isShared?: boolean
   isCompleted?: boolean
 }
 
@@ -16,22 +17,28 @@ interface ApiResponse<T> {
   meta: Record<string, unknown>
 }
 
+interface ItemsResponse<T> {
+  items: T[]
+}
+
 export interface CreateGoalDto {
   title: string
   targetAmount: number
   currentAmount?: number
   deadline?: string
   monthlyContribution?: number
+  isShared?: boolean
 }
 
 export async function fetchGoalsRequest(): Promise<ApiGoal[]> {
   const { data } = await apiClient.get<
-    ApiResponse<ApiGoal[]> | ApiGoal[]
+    ApiResponse<ApiGoal[] | ItemsResponse<ApiGoal>> | ApiGoal[]
   >('/goals')
 
   if (Array.isArray(data)) return data
-  const payload = (data as ApiResponse<ApiGoal[]>).data
-  return Array.isArray(payload) ? payload : []
+  const payload = data.data
+  if (Array.isArray(payload)) return payload
+  return payload.items ?? []
 }
 
 export async function createGoalRequest(dto: CreateGoalDto): Promise<ApiGoal> {

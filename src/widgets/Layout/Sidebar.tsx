@@ -13,11 +13,19 @@ function initials(name: string) {
     .toUpperCase()
 }
 
+function displayUserName(displayName?: string, email?: string) {
+  const name = displayName?.trim()
+  if (name) return name
+  if (!email) return 'Пользователь'
+  const local = email.split('@')[0] ?? email
+  return local
+}
+
 export default function Sidebar() {
   const dispatch = useAppDispatch()
   const user = useAppSelector((s) => s.auth.user)
 
-  const displayName = user?.displayName ?? user?.email ?? ''
+  const userName = displayUserName(user?.displayName, user?.email)
 
   const handleLogout = () => {
     dispatch(logoutUser())
@@ -55,18 +63,24 @@ export default function Sidebar() {
       <div className="sidebar__user">
         {user ? (
           <>
-            <div className="sidebar__avatar">{initials(displayName)}</div>
-            <div className="sidebar__user-info">
-              <div className="sidebar__user-name">{displayName}</div>
-              <div className="sidebar__user-email">{user.email}</div>
-              <button
-                type="button"
-                className="sidebar__logout"
-                onClick={handleLogout}
-              >
-                Выйти
-              </button>
-            </div>
+            <NavLink to={ROUTES.PROFILE} className="sidebar__user-link">
+              <div className="sidebar__avatar">{initials(userName)}</div>
+              <div className="sidebar__user-info">
+                <div className="sidebar__user-name" title={userName}>
+                  {userName}
+                </div>
+                <div className="sidebar__user-email" title={user.email}>
+                  {user.email}
+                </div>
+              </div>
+            </NavLink>
+            <button
+              type="button"
+              className="sidebar__logout"
+              onClick={handleLogout}
+            >
+              Выйти
+            </button>
           </>
         ) : (
           <div className="sidebar__guest">

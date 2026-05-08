@@ -44,6 +44,9 @@ describe('transactionsSlice reducer', () => {
       base,
       createTransaction.fulfilled(expenseTx, 'req', {
         category: 'products',
+        categoryId: '11111111-1111-1111-1111-111111111111',
+        householdId: '22222222-2222-2222-2222-222222222222',
+        payerUserId: '33333333-3333-3333-3333-333333333333',
         amount: '10000',
         type: 'expense',
         date: '2026-01-02'
@@ -62,6 +65,9 @@ describe('transactionsSlice reducer', () => {
         'req',
         {
           category: 'x',
+          categoryId: '11111111-1111-1111-1111-111111111111',
+          householdId: '22222222-2222-2222-2222-222222222222',
+          payerUserId: '33333333-3333-3333-3333-333333333333',
           amount: 'abc',
           type: 'expense',
           date: '2026-01-02'

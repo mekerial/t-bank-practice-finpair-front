@@ -1,8 +1,10 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import axios from 'axios'
 import { getErrorMessage } from '../../../shared/lib/asyncUtils'
+import { toRussianCategoryName } from '../../../shared/lib/categoryLocalization'
 import {
   fetchTransactionsRequest,
-  createTransactionRequest
+  createHouseholdTransactionRequest
 } from '../../../shared/api/transactionsApi'
 import type { ApiTransaction } from '../../../shared/api/transactionsApi'
 
@@ -13,6 +15,7 @@ export interface Transaction {
   category: string
   date: string
   payer: string
+  userId?: string
   amount: number
 }
 
@@ -26,6 +29,9 @@ export interface TransactionsSummary {
 
 export interface CreateTransactionPayload {
   category: string
+  categoryId: string
+  householdId: string
+  payerUserId: string
   amount: string
   type: 'income' | 'expense'
   date: string
@@ -67,9 +73,10 @@ function apiToTransaction(t: ApiTransaction): Transaction {
   const amount = t.type === 'expense' ? -Math.abs(t.amount) : Math.abs(t.amount)
   return {
     id: t.id,
-    category: t.title ?? t.category,
+    category: toRussianCategoryName(t.title ?? t.category),
     date: dateStr,
-    payer: '',
+    payer: t.userId ? `U-${t.userId.slice(0, 4)}` : 'Участник',
+    userId: t.userId,
     amount
   }
 }
@@ -100,6 +107,9 @@ export const fetchTransactions = createAsyncThunk<
     const items = apiItems.map(apiToTransaction)
     return { items, summary: calcSummary(items) }
   } catch (e) {
+    if (axios.isAxiosError(e) && e.response?.status === 404) {
+      return { items: [], summary: defaultSummary }
+    }
     return rejectWithValue(getErrorMessage(e))
   }
 })
@@ -114,14 +124,22 @@ export const createTransaction = createAsyncThunk<
     if (Number.isNaN(amountNumber) || amountNumber <= 0) {
       return rejectWithValue('Некорректная сумма')
     }
-    const apiItem = await createTransactionRequest({
+    const normalizedCategory = toRussianCategoryName(payload.category.trim() || 'Операция')
+    const normalizedDescription =
+      payload.description?.trim() ||
+      `${payload.type === 'income' ? 'Доход' : 'Расход'}: ${normalizedCategory}`
+
+    const apiItem = await createHouseholdTransactionRequest({
+      householdId: payload.householdId,
+      userId: payload.payerUserId,
+      categoryId: payload.categoryId,
       type: payload.type,
-      category: payload.category.trim(),
       amount: amountNumber,
-      description: payload.description,
+      description: normalizedDescription,
       date: payload.date
     })
-    return apiToTransaction(apiItem)
+    const created = apiToTransaction(apiItem)
+    return { ...created, category: normalizedCategory }
   } catch (e) {
     return rejectWithValue(getErrorMessage(e))
   }
@@ -137,6 +155,11 @@ const transactionsSlice = createSlice({
   },
   extraReducers(builder) {
     builder
+      .addCase('auth/loginUser/fulfilled', () => initialState)
+      .addCase('auth/tryRestoreSession/fulfilled', () => initialState)
+      .addCase('auth/logoutUser/fulfilled', () => initialState)
+      .addCase('auth/logoutUser/rejected', () => initialState)
+      .addCase('auth/logout', () => initialState)
       .addCase(fetchTransactions.pending, (state) => {
         state.status = 'loading'
         state.error = null

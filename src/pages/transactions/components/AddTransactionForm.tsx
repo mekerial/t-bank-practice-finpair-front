@@ -2,49 +2,26 @@ import { Controller, useForm, useWatch } from 'react-hook-form'
 import Card from '../../../shared/ui/Card'
 import Button from '../../../shared/ui/Button'
 import Input from '../../../shared/ui/Input'
-import {
-  PAYER_ALEXEY,
-  PAYER_MARIA,
-  type PartnerLabel
-} from '../../../shared/lib/mocks'
 
 type TransactionType = 'income' | 'expense'
 
-export interface TransactionForm {
-  category: string
-  amount: string
-  payer: PartnerLabel
-  type: TransactionType
-  date: string
+export interface PayerOption {
+  userId: string
+  label: string
 }
 
-const CATEGORY_OPTIONS: Record<TransactionType, string[]> = {
-  expense: [
-    'Продукты',
-    'Кафе и рестораны',
-    'Транспорт',
-    'Такси',
-    'Жильё',
-    'Коммунальные услуги',
-    'Интернет',
-    'Здоровье',
-    'Красота',
-    'Одежда',
-    'Образование',
-    'Подписки',
-    'Прочее'
-  ],
-  income: [
-    'Зарплата',
-    'Подарок',
-    'Возврат',
-    'Инвестиции',
-    'Аренда',
-    'Продажа',
-    'Перевод',
-    'Подписки',
-    'Прочее'
-  ]
+export interface CategoryOption {
+  id: string
+  name: string
+  type: TransactionType
+}
+
+export interface TransactionForm {
+  categoryId: string
+  payerUserId: string
+  amount: string
+  type: TransactionType
+  date: string
 }
 
 function ensureSelectOpensDown(target: HTMLSelectElement) {
@@ -64,11 +41,15 @@ function ensureSelectOpensDown(target: HTMLSelectElement) {
 }
 
 interface AddTransactionFormProps {
+  payerOptions: PayerOption[]
+  categoryOptions: CategoryOption[]
   onSubmit: (data: TransactionForm) => void
   onCancel: () => void
 }
 
 export default function AddTransactionForm({
+  payerOptions = [],
+  categoryOptions = [],
   onSubmit,
   onCancel
 }: AddTransactionFormProps) {
@@ -85,9 +66,9 @@ export default function AddTransactionForm({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
     defaultValues: {
-      category: '',
+      categoryId: '',
+      payerUserId: payerOptions[0]?.userId ?? '',
       amount: '',
-      payer: PAYER_ALEXEY,
       type: 'expense',
       date: ''
     }
@@ -99,12 +80,13 @@ export default function AddTransactionForm({
     defaultValue: 'expense'
   })
 
-  const currentCategories = CATEGORY_OPTIONS[selectedType]
+  const currentCategories = (categoryOptions ?? []).filter(
+    (c) => c.type === selectedType
+  )
 
   const submitHandler = (data: TransactionForm) => {
     const normalizedData: TransactionForm = {
       ...data,
-      category: data.category.trim(),
       amount: data.amount.trim()
     }
 
@@ -140,7 +122,7 @@ export default function AddTransactionForm({
                   onChange={(event) => {
                     const nextType = event.target.value as TransactionType
                     field.onChange(nextType)
-                    setValue('category', '')
+                    setValue('categoryId', '')
                   }}
                   aria-invalid={isSubmitted && errors.type ? 'true' : 'false'}
                 >
@@ -155,31 +137,37 @@ export default function AddTransactionForm({
           </div>
 
           <div className="transactions-form__field">
-            <label className="transactions-form__label" htmlFor="payer">
-              Плательщик
+            <label className="transactions-form__label" htmlFor="payerUserId">
+              Кто совершил операцию
             </label>
             <Controller
-              name="payer"
+              name="payerUserId"
               control={control}
-              rules={{ required: 'Выберите плательщика' }}
+              rules={{ required: 'Выберите пользователя' }}
               render={({ field }) => (
                 <select
-                  id="payer"
+                  id="payerUserId"
                   className={`transactions-form__select ${
-                    isSubmitted && errors.payer
+                    isSubmitted && errors.payerUserId
                       ? 'transactions-form__select--error'
                       : ''
                   }`}
                   {...field}
-                  aria-invalid={isSubmitted && errors.payer ? 'true' : 'false'}
+                  aria-invalid={
+                    isSubmitted && errors.payerUserId ? 'true' : 'false'
+                  }
                 >
-                  <option value={PAYER_ALEXEY}>{PAYER_ALEXEY}</option>
-                  <option value={PAYER_MARIA}>{PAYER_MARIA}</option>
+                  <option value="">Выберите пользователя</option>
+                  {payerOptions.map((p) => (
+                    <option key={p.userId} value={p.userId}>
+                      {p.label}
+                    </option>
+                  ))}
                 </select>
               )}
             />
-            {isSubmitted && errors.payer && (
-              <p className="transactions-form__error">{errors.payer.message}</p>
+            {isSubmitted && errors.payerUserId && (
+              <p className="transactions-form__error">{errors.payerUserId.message}</p>
             )}
           </div>
         </div>
@@ -190,7 +178,7 @@ export default function AddTransactionForm({
               Категория
             </label>
             <Controller
-              name="category"
+              name="categoryId"
               control={control}
               rules={{
                 required: 'Выберите категорию'
@@ -199,13 +187,13 @@ export default function AddTransactionForm({
                 <select
                   id="category"
                   className={`transactions-form__select ${
-                    isSubmitted && errors.category
+                    isSubmitted && errors.categoryId
                       ? 'transactions-form__select--error'
                       : ''
                   }`}
                   {...field}
                   aria-invalid={
-                    isSubmitted && errors.category ? 'true' : 'false'
+                    isSubmitted && errors.categoryId ? 'true' : 'false'
                   }
                   onMouseDown={(event) => {
                     ensureSelectOpensDown(event.currentTarget)
@@ -216,16 +204,16 @@ export default function AddTransactionForm({
                 >
                   <option value="">Выберите категорию</option>
                   {currentCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
+                    <option key={category.id} value={category.id}>
+                      {category.name}
                     </option>
                   ))}
                 </select>
               )}
             />
-            {isSubmitted && errors.category && (
+            {isSubmitted && errors.categoryId && (
               <p className="transactions-form__error">
-                {errors.category.message}
+                {errors.categoryId.message}
               </p>
             )}
           </div>

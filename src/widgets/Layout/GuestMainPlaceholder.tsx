@@ -25,6 +25,21 @@ const FEATURES = [
   }
 ] as const
 
+const ONBOARDING_STEPS = [
+  {
+    title: 'Зарегистрируйтесь',
+    text: 'Создайте аккаунт, чтобы получить персональный профиль и доступ к настройкам пары.'
+  },
+  {
+    title: 'Войдите в аккаунт',
+    text: 'После регистрации выполните отдельный вход: сначала регистрация, затем авторизация.'
+  },
+  {
+    title: 'Подключите партнера',
+    text: 'В Настройках создайте пару, отправьте invite-код и попросите партнера ввести его после входа.'
+  }
+] as const
+
 export default function GuestMainPlaceholder() {
   const { pathname } = useLocation()
   const sectionTitle = sectionLabel(pathname)
@@ -65,6 +80,21 @@ export default function GuestMainPlaceholder() {
           <div className="guest-welcome__orbit guest-welcome__orbit--2" />
         </div>
       </div>
+
+      <section className="guest-welcome__onboarding" aria-label="Как начать">
+        <h2 className="guest-welcome__onboarding-title">Как начать за 3 шага</h2>
+        <ol className="guest-welcome__steps">
+          {ONBOARDING_STEPS.map((step, i) => (
+            <li key={step.title} className="guest-welcome__step">
+              <div className="guest-welcome__step-number">{i + 1}</div>
+              <div>
+                <div className="guest-welcome__step-title">{step.title}</div>
+                <p className="guest-welcome__step-text">{step.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
 
       <ul className="guest-welcome__features">
         {FEATURES.map((f) => (

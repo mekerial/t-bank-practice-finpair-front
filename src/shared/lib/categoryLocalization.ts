@@ -1,0 +1,60 @@
+const CATEGORY_RU_MAP: Record<string, string> = {
+  mortgage: 'Ипотека',
+  rent: 'Аренда',
+  housing: 'Жилье',
+  products: 'Продукты',
+  groceries: 'Продукты',
+  food: 'Продукты',
+  cafe: 'Кафе и рестораны',
+  restaurants: 'Кафе и рестораны',
+  transport: 'Транспорт',
+  taxi: 'Такси',
+  fuel: 'Топливо',
+  entertainment: 'Развлечения',
+  health: 'Здоровье',
+  medical: 'Медицина',
+  utilities: 'Коммунальные',
+  internet: 'Интернет',
+  education: 'Образование',
+  shopping: 'Покупки',
+  travel: 'Путешествия',
+  salary: 'Зарплата',
+  wages: 'Зарплата',
+  income: 'Доход',
+  passive_income: 'Пассивный доход',
+  bonus: 'Премия',
+  award: 'Премия',
+  stipend: 'Стипендия',
+  pension: 'Пенсия',
+  gift: 'Подарок',
+  cashback: 'Кэшбэк',
+  dividends: 'Дивиденды',
+  interest: 'Проценты по вкладам',
+  deposit_interest: 'Проценты по вкладам',
+  rent_income: 'Доход от аренды',
+  rental_income: 'Доход от аренды',
+  freelance: 'Фриланс',
+  part_time: 'Подработка',
+  business: 'Бизнес',
+  sales: 'Продажи',
+  sale: 'Продажа',
+  refund: 'Возврат',
+  reimbursement: 'Компенсация',
+  investment: 'Инвестиции',
+  investments: 'Инвестиции',
+  crypto: 'Криптовалюта',
+  transfer: 'Перевод',
+  transfer_in: 'Перевод (входящий)',
+  transfer_out: 'Перевод (исходящий)',
+  taxes: 'Налоги',
+  fees: 'Комиссии',
+  other: 'Прочее'
+}
+
+export function toRussianCategoryName(value: string | undefined): string {
+  const raw = String(value ?? '').trim()
+  if (!raw) return 'Прочее'
+  const normalized = raw.toLowerCase()
+  const snakeCaseKey = normalized.replace(/[\s-]+/g, '_')
+  return CATEGORY_RU_MAP[normalized] ?? CATEGORY_RU_MAP[snakeCaseKey] ?? raw
+}

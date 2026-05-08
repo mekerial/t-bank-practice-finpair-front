@@ -92,10 +92,25 @@
 
 .sidebar__user {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
   padding: 12px;
   border-top: 1px solid var(--color-border);
+}
+
+.sidebar__user-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  border-radius: 10px;
+  padding: 6px 4px;
+  min-width: 0;
+}
+
+.sidebar__user-link:hover {
+  background: var(--color-primary-08);
 }
 
 .sidebar__avatar {
@@ -114,24 +129,33 @@
 
 .sidebar__user-info {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .sidebar__user-name {
   font: var(--font-body);
   font-weight: 500;
   color: var(--color-text);
-}
-
-.sidebar__user-email {
-  font: var(--font-body);
-  color: var(--color-text-muted);
+  line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.sidebar__user-email {
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
 .sidebar__logout {
-  margin-top: 6px;
+  margin-top: 0;
   padding: 0;
   border: none;
   background: none;

@@ -21,9 +21,9 @@ export default function GoalCreateForm({
   onSubmitForm,
   onCancel
 }: GoalCreateFormProps) {
+  const today = new Date().toISOString().split('T')[0]
   const {
     control,
-    register,
     handleSubmit,
     reset,
     setError,
@@ -53,8 +53,18 @@ export default function GoalCreateForm({
     }
 
     clearErrors('collected')
-    onSubmitForm(data)
-    reset()
+    onSubmitForm({
+      ...data,
+      isMain: Boolean(data.isMain)
+    })
+    reset({
+      title: '',
+      deadline: '',
+      collected: '',
+      target: '',
+      monthly: '',
+      isMain: false
+    })
   }
 
   return (
@@ -88,13 +98,16 @@ export default function GoalCreateForm({
               name="deadline"
               control={control}
               rules={{
-                required: 'Укажите срок'
+                required: 'Укажите срок',
+                validate: (value) =>
+                  value >= today || 'Дата цели должна быть сегодня или позже'
               }}
               render={({ field }) => (
                 <Input
                   id="goal-deadline"
                   label="Срок"
-                  placeholder="Например, Декабрь 2026"
+                  type="date"
+                  min={today}
                   value={field.value}
                   onChange={field.onChange}
                 />
@@ -226,10 +239,20 @@ export default function GoalCreateForm({
           </div>
         </div>
 
-        <label className="goal-create__checkbox">
-          <input type="checkbox" {...register('isMain')} />
-          <span>Сделать главной целью</span>
-        </label>
+        <Controller
+          name="isMain"
+          control={control}
+          render={({ field }) => (
+            <label className="goal-create__checkbox">
+              <input
+                type="checkbox"
+                checked={Boolean(field.value)}
+                onChange={(e) => field.onChange(e.target.checked)}
+              />
+              <span>Сделать главной целью</span>
+            </label>
+          )}
+        />
 
         <div className="goal-create__actions">
           <Button type="submit" disabled={isSubmitting}>
