@@ -1,10 +1,12 @@
 import { apiClient } from './apiClient'
-import type {
-  KpiItem,
-  CategorySlice,
-  MonthlyPoint,
-  PartnerComparePoint,
-  Insight
+import {
+  formatMoneyPlain,
+  type HouseholdCurrency,
+  type KpiItem,
+  type CategorySlice,
+  type MonthlyPoint,
+  type PartnerComparePoint,
+  type Insight
 } from '../lib/financeView'
 import { fetchTransactionsRequest } from './transactionsApi'
 import { fetchGoalsRequest } from './goalsApi'
@@ -52,13 +54,24 @@ interface InsightResult {
   message?: string
 }
 
+/** Палитра для «Распределение по категориям»: разнесённые по кругу оттенки, хорошо различимые рядом. */
 const CATEGORY_COLORS = [
-  '#6366f1',
-  '#8b5cf6',
-  '#a78bfa',
-  '#c4b5fd',
-  '#ddd6fe',
-  '#ede9fe'
+  '#2563eb',
+  '#ea580c',
+  '#059669',
+  '#dc2626',
+  '#7c3aed',
+  '#ca8a04',
+  '#0891b2',
+  '#db2777',
+  '#4d7c0f',
+  '#4f46e5',
+  '#0d9488',
+  '#c026d3',
+  '#b45309',
+  '#0369a1',
+  '#a21caf',
+  '#15803d'
 ]
 
 const CATEGORY_NAME_RU_MAP: Record<string, string> = {
@@ -124,7 +137,9 @@ function pickItems<T>(payload: unknown, fallbackKey?: string): T[] {
   return []
 }
 
-export async function fetchAnalyticsSummary(): Promise<KpiItem[]> {
+export async function fetchAnalyticsSummary(
+  currency: HouseholdCurrency = 'RUB'
+): Promise<KpiItem[]> {
   const { data } = await apiClient.get<ApiResponse<SummaryResult>>(
     '/analytics/summary'
   )
@@ -142,25 +157,26 @@ export async function fetchAnalyticsSummary(): Promise<KpiItem[]> {
     {
       id: 'avg',
       label: 'Средние расходы',
-      value: averageExpense !== null
-        ? `${new Intl.NumberFormat('ru-RU').format(Math.round(averageExpense))}₽`
-        : '—',
+      value:
+        averageExpense !== null
+          ? formatMoneyPlain(Math.round(averageExpense), currency)
+          : '—',
       hint: 'в месяц'
     },
     {
       id: 'top',
       label: 'Самая большая категория',
       value: topCategory && topCategory !== '—' ? normalizeCategoryName(topCategory, 0) : '—',
-      hint: topCategoryAmount !== null
-        ? `${new Intl.NumberFormat('ru-RU').format(topCategoryAmount)}₽`
-        : ''
+      hint:
+        topCategoryAmount !== null
+          ? formatMoneyPlain(Math.round(topCategoryAmount), currency)
+          : ''
     },
     {
       id: 'bal',
       label: 'Остаток',
-      value: balance !== null
-        ? `${new Intl.NumberFormat('ru-RU').format(balance)}₽`
-        : '—',
+      value:
+        balance !== null ? formatMoneyPlain(Math.round(balance), currency) : '—',
       hint: 'доступная сумма'
     },
     {
@@ -247,9 +263,21 @@ export async function fetchAnalyticsInsights(): Promise<Insight[]> {
   }))
 }
 
+/** Ключ месяца YYYY-MM без new Date(), чтобы не смещать месяц в часовых поясах при ISO-датах. */
 function monthKey(dateStr: string): string {
-  const date = new Date(dateStr)
-  return Number.isNaN(date.getTime()) ? '—' : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+  const s = String(dateStr ?? '').trim()
+  const iso = /^(\d{4})-(\d{2})(?:-(\d{2}))?/.exec(s)
+  if (iso) {
+    const y = Number(iso[1])
+    const mo = Number(iso[2])
+    if (Number.isFinite(y) && mo >= 1 && mo <= 12) {
+      return `${iso[1]}-${iso[2]}`
+    }
+  }
+  const date = new Date(s)
+  return Number.isNaN(date.getTime())
+    ? '—'
+    : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
 function previousMonthKey(key: string): string {
@@ -269,14 +297,20 @@ function localizeKnownCategoriesInText(text: string): string {
   }, text)
 }
 
-function normalizeInsightItem(item: Insight, index: number): Insight {
+function normalizeInsightItem(
+  item: Insight,
+  index: number,
+  currency: HouseholdCurrency
+): Insight {
   const rawTitle = String(item.title ?? '').trim()
   let rawText = String(item.text ?? '').trim()
   const haystack = `${rawTitle} ${rawText}`.toLowerCase()
 
   if (
     haystack.includes('expenses are above 80%') ||
-    (haystack.includes('expenses') && haystack.includes('income') && haystack.includes('80'))
+    (haystack.includes('expenses') && haystack.includes('income') && haystack.includes('80')) ||
+    haystack.includes('превышают 80%') ||
+    haystack.includes('выше 80% дохода')
   ) {
     return {
       id: item.id ?? index + 1,
@@ -285,12 +319,58 @@ function normalizeInsightItem(item: Insight, index: number): Insight {
     }
   }
 
+  if (
+    haystack.includes('financial load is below 50') ||
+    haystack.includes('good moment to increase savings') ||
+    haystack.includes('нагрузка ниже 50') ||
+    (haystack.includes('ниже 50%') && haystack.includes('доход'))
+  ) {
+    return {
+      id: item.id ?? index + 1,
+      title: 'Резерв и накопления',
+      text: 'Нагрузка ниже 50% дохода — хорошее время усилить откладываемую сумму и взносы в цели.'
+    }
+  }
+
+  if (
+    haystack.includes('financial load is moderate') ||
+    haystack.includes('keep tracking category') ||
+    haystack.includes('нагрузка в умеренной') ||
+    haystack.includes('умеренной зоне')
+  ) {
+    return {
+      id: item.id ?? index + 1,
+      title: 'Динамика нагрузки',
+      text: 'Нагрузка в умеренной зоне. Продолжайте следить за сдвигами по категориям расходов.'
+    }
+  }
+
   const topExpenseMatch = rawText.match(/top expense category is\s+(.+?)[:;,-]\s*([\d.,]+)/i)
   if (topExpenseMatch) {
     const category = normalizeCategoryName(topExpenseMatch[1], 0)
     const amount = Number(topExpenseMatch[2].replace(',', '.'))
     const formatted = Number.isFinite(amount)
-      ? `${new Intl.NumberFormat('ru-RU').format(Math.round(amount))}₽`
+      ? formatMoneyPlain(Math.round(amount), currency)
+      : ''
+    return {
+      id: item.id ?? index + 1,
+      title: 'Главная категория расходов',
+      text: `Больше всего тратится на категорию "${category}"${formatted ? ` — ${formatted}` : '.'}`
+    }
+  }
+
+  const topExpenseRu = rawText.match(
+    /больше всего тратится на категори[юя]\s*[«"](.+?)[»"]\s*[:：]\s*([\d\s.,]+)/i
+  )
+  if (topExpenseRu) {
+    const category = normalizeCategoryName(topExpenseRu[1].trim(), 0)
+    const amount = Number(
+      String(topExpenseRu[2])
+        .replace(/\s/g, '')
+        .replace(',', '.')
+    )
+    const formatted = Number.isFinite(amount)
+      ? formatMoneyPlain(Math.round(amount), currency)
       : ''
     return {
       id: item.id ?? index + 1,
@@ -322,9 +402,11 @@ function normalizeInsightItem(item: Insight, index: number): Insight {
   }
 }
 
-export async function fetchAnalyticsPageData(): Promise<AnalyticsPageData> {
+export async function fetchAnalyticsPageData(
+  currency: HouseholdCurrency = 'RUB'
+): Promise<AnalyticsPageData> {
   const [kpi, categories, dynamics, insights, tx, goals] = await Promise.all([
-    fetchAnalyticsSummary().catch(() => [] as KpiItem[]),
+    fetchAnalyticsSummary(currency).catch(() => [] as KpiItem[]),
     fetchAnalyticsCategories().catch(() => [] as CategorySlice[]),
     fetchAnalyticsDynamics().catch(() => ({ monthly: [], partnerCompare: [] })),
     fetchAnalyticsInsights().catch(() => [] as Insight[]),
@@ -363,9 +445,10 @@ export async function fetchAnalyticsPageData(): Promise<AnalyticsPageData> {
     {
       id: 'avg',
       label: 'Средние расходы',
-      value: `${new Intl.NumberFormat('ru-RU').format(
-        Math.round(expense / Math.max(1, expenseCount))
-      )}₽`,
+      value: formatMoneyPlain(
+        Math.round(expense / Math.max(1, expenseCount)),
+        currency
+      ),
       hint: 'по расходным операциям'
     },
     {
@@ -373,15 +456,13 @@ export async function fetchAnalyticsPageData(): Promise<AnalyticsPageData> {
       label: 'Самая большая категория',
       value: topEntry ? normalizeCategoryName(topEntry[0], 0) : '—',
       hint: topEntry
-        ? `${new Intl.NumberFormat('ru-RU').format(Math.round(topEntry[1]))}₽`
+        ? formatMoneyPlain(Math.round(topEntry[1]), currency)
         : ''
     },
     {
       id: 'bal',
       label: 'Остаток',
-      value: `${new Intl.NumberFormat('ru-RU').format(
-        Math.round(income - expense)
-      )}₽`,
+      value: formatMoneyPlain(Math.round(income - expense), currency),
       hint: 'доходы - расходы'
     },
     {
@@ -453,9 +534,10 @@ export async function fetchAnalyticsPageData(): Promise<AnalyticsPageData> {
     })
   }
 
+  // Стабильный порядок A/B как у отсортированных по userId участников на экране аналитики
   const txUserOrder = Array.from(
     new Set(tx.filter((t) => t.userId).map((t) => String(t.userId)))
-  )
+  ).sort((a, b) => a.localeCompare(b))
   const [userAId, userBId] = txUserOrder
   const txByMonth = tx
     .filter((t) => isType(t.type, 'expense'))
@@ -517,7 +599,7 @@ export async function fetchAnalyticsPageData(): Promise<AnalyticsPageData> {
       id: 1002,
       title: 'Главная категория расходов',
       text: topEntry
-        ? `Больше всего тратится на категорию "${normalizeCategoryName(topEntry[0], 0)}" — ${new Intl.NumberFormat('ru-RU').format(Math.round(topEntry[1]))}₽.`
+        ? `Больше всего тратится на категорию "${normalizeCategoryName(topEntry[0], 0)}" — ${formatMoneyPlain(Math.round(topEntry[1]), currency)}.`
         : 'Пока недостаточно данных для выделения главной категории расходов.'
     },
     {
@@ -534,7 +616,7 @@ export async function fetchAnalyticsPageData(): Promise<AnalyticsPageData> {
 
   const seenInsightTitles = new Set<string>()
   const normalizedBackendInsights = insights.map((item, index) =>
-    normalizeInsightItem(item, index)
+    normalizeInsightItem(item, index, currency)
   )
   const safeInsights = [...defaultInsights, ...normalizedBackendInsights]
     .filter((item) => {

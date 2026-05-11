@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
 import Card from '../../shared/ui/Card'
 import Button from '../../shared/ui/Button'
@@ -12,7 +12,8 @@ import {
 } from '../../shared/ui/icons'
 import {
   formatMoney,
-  formatMoneyPlain
+  formatMoneyPlain,
+  type HouseholdCurrency
 } from '../../shared/lib/financeView'
 import {
   clearCreateTransactionError,
@@ -40,6 +41,29 @@ import { isValidHouseholdId } from '../../shared/lib/householdId'
 type TypeFilter = 'all' | 'income' | 'expense'
 type PayerFilter = 'all' | string
 const PAGE_SIZE = 8
+
+type PageEntry = number | 'gap'
+
+/** Номера страниц и пропуски «…», чтобы не рисовать десятки кнопок подряд */
+function visiblePageEntries(total: number, current: number): PageEntry[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1)
+  }
+  const edge = new Set<number>([1, total])
+  for (let i = current - 1; i <= current + 1; i++) {
+    if (i >= 1 && i <= total) edge.add(i)
+  }
+  const sorted = [...edge].sort((a, b) => a - b)
+  const out: PageEntry[] = []
+  for (let i = 0; i < sorted.length; i++) {
+    const n = sorted[i]
+    if (i > 0 && n - sorted[i - 1] > 1) {
+      out.push('gap')
+    }
+    out.push(n)
+  }
+  return out
+}
 
 const TYPE_FILTER_OPTIONS: SimpleSelectOption<TypeFilter>[] = [
   { value: 'all', label: 'Все' },
@@ -136,15 +160,8 @@ export default function TransactionsPage() {
 
   const txHouseholdId = coupleData?.id
   useEffect(() => {
-    if (status === 'idle' && isValidHouseholdId(txHouseholdId)) {
-      void dispatch(fetchTransactions())
-    }
-  }, [dispatch, status, txHouseholdId])
-
-  useEffect(() => {
-    if (isValidHouseholdId(txHouseholdId)) {
-      void dispatch(fetchTransactions())
-    }
+    if (!isValidHouseholdId(txHouseholdId)) return
+    void dispatch(fetchTransactions())
   }, [dispatch, txHouseholdId])
 
   const filtered = useMemo(() => {
@@ -182,7 +199,22 @@ export default function TransactionsPage() {
     }
   }, [page, totalPages])
 
-  const { income, expense, balance, balanceChangePercent, period } = summary
+  const pageButtons = useMemo(
+    () => visiblePageEntries(totalPages, page),
+    [totalPages, page]
+  )
+
+  const historyListRef = useRef<HTMLDivElement>(null)
+
+  const {
+    income,
+    expense,
+    balance,
+    balanceChangePercent,
+    balanceChangeSkipReason,
+    period
+  } = summary
+  const currency: HouseholdCurrency = coupleData?.currency ?? 'RUB'
   const handleAddTransaction = async (data: TransactionForm) => {
     dispatch(clearCreateTransactionError())
     const selectedCategory = (categoriesData ?? []).find(
@@ -281,7 +313,7 @@ export default function TransactionsPage() {
         <div className="summary-card">
           <div className="summary-card__label">Доходы</div>
           <div className="summary-card__value summary-card__value--income">
-            {formatMoney(income)}
+            {formatMoney(income, currency)}
           </div>
           <div className="summary-card__hint">за {period}</div>
         </div>
@@ -289,7 +321,7 @@ export default function TransactionsPage() {
         <div className="summary-card">
           <div className="summary-card__label">Расходы</div>
           <div className="summary-card__value summary-card__value--expense">
-            -{formatMoneyPlain(expense)}
+            -{formatMoneyPlain(expense, currency)}
           </div>
           <div className="summary-card__hint">за {period}</div>
         </div>
@@ -297,10 +329,16 @@ export default function TransactionsPage() {
         <div className="summary-card">
           <div className="summary-card__label">Баланс</div>
           <div className="summary-card__value">
-            {formatMoneyPlain(balance)}
+            {formatMoneyPlain(balance, currency)}
           </div>
           <div className="summary-card__hint summary-card__hint--accent">
-            +{balanceChangePercent}% к прошлому месяцу
+            {balanceChangePercent === null
+              ? balanceChangeSkipReason === 'not_comparable'
+                ? 'нет сопоставимого %: прошлый месяц слабее базы или сильный перекос'
+                : 'в прошлый месяц нет суммы для сравнения по чистому потоку'
+              : balanceChangePercent === 0
+                ? '0% к прошлому месяцу'
+                : `${balanceChangePercent > 0 ? '+' : ''}${balanceChangePercent}% к прошлому месяцу`}
           </div>
         </div>
       </div>
@@ -318,7 +356,7 @@ export default function TransactionsPage() {
         loadingLabel="Загружаем транзакции…"
       >
         <Card title="История операций">
-          <div className="tx-list">
+          <div className="tx-list" ref={historyListRef}>
             {pagedItems.map((t) => {
               const isIncome = t.amount > 0
               const initials = t.category.slice(0, 2)
@@ -344,7 +382,7 @@ export default function TransactionsPage() {
                       (isIncome ? 'tx-row__amount--income' : '')
                     }
                   >
-                    {formatMoney(t.amount)}
+                    {formatMoney(t.amount, currency)}
                   </div>
                 </div>
               )
@@ -355,41 +393,66 @@ export default function TransactionsPage() {
             )}
           </div>
 
-          <div className="pagination">
+          <nav className="pagination" aria-label="Страницы списка операций">
             <button
               type="button"
-              className="pagination__btn"
+              className="pagination__btn pagination__btn--edge"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
+              disabled={page <= 1}
+              aria-label="Предыдущая страница"
             >
-              <IconChevronLeft width={14} height={14} />
-              Предыдущие
+              <IconChevronLeft width={14} height={14} aria-hidden />
+              <span className="pagination__btn-text">Предыдущие</span>
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-              <button
-                type="button"
-                key={n}
-                onClick={() => setPage(n)}
-                className={
-                  'pagination__page' +
-                  (page === n ? ' pagination__page--active' : '')
-                }
-              >
-                {n}
-              </button>
-            ))}
+            <div className="pagination__pages">
+              {totalPages > 1 ? (
+                pageButtons.map((entry, idx) =>
+                  entry === 'gap' ? (
+                    <span
+                      key={`gap-${idx}`}
+                      className="pagination__ellipsis"
+                      aria-hidden
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      key={entry}
+                      onClick={() => setPage(entry)}
+                      className={
+                        'pagination__page' +
+                        (page === entry ? ' pagination__page--active' : '')
+                      }
+                      aria-label={`Страница ${entry}`}
+                      aria-current={page === entry ? 'page' : undefined}
+                    >
+                      {entry}
+                    </button>
+                  )
+                )
+              ) : (
+                <span
+                  className="pagination__page pagination__page--active pagination__page--static"
+                  aria-current="page"
+                >
+                  1
+                </span>
+              )}
+            </div>
 
             <button
               type="button"
-              className="pagination__btn"
+              className="pagination__btn pagination__btn--edge"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
+              disabled={page >= totalPages}
+              aria-label="Следующая страница"
             >
-              Следующие
-              <IconChevronRight width={14} height={14} />
+              <span className="pagination__btn-text">Следующие</span>
+              <IconChevronRight width={14} height={14} aria-hidden />
             </button>
-          </div>
+          </nav>
         </Card>
       </AsyncDataView>
     </div>

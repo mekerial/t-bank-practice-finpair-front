@@ -43,10 +43,7 @@ export default function RegisterPage() {
       })
       navigate(ROUTES.LOGIN, {
         replace: true,
-        state: {
-          registered: true,
-          email: data.email
-        }
+        state: { email: data.email }
       })
     } catch (e) {
       setFormError(typeof e === 'string' ? e : getErrorMessage(e))

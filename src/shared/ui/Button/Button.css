@@ -11,9 +11,18 @@
   line-height: 24px;
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease;
+    background-color var(--motion-duration-fast) var(--motion-ease-smooth),
+    color var(--motion-duration-fast) var(--motion-ease-smooth),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-smooth),
+    transform var(--motion-duration-fast) var(--motion-ease-smooth);
+}
+
+.btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.btn:not(:disabled):active {
+  transform: translateY(0) scale(0.97);
 }
 
 .btn:disabled {
@@ -32,6 +41,7 @@
 
 .btn--primary:hover:not(:disabled) {
   background: var(--color-primary-hover);
+  box-shadow: 0 5px 20px rgba(123, 97, 255, 0.3);
 }
 
 .btn--primary:focus-visible {
@@ -47,4 +57,13 @@
 
 .btn--secondary:hover:not(:disabled) {
   background: #f1f2f5;
+  box-shadow: var(--shadow-card-hover);
+}
+
+html[data-theme='dark'] .btn--primary:hover:not(:disabled) {
+  box-shadow: 0 6px 24px rgba(155, 134, 255, 0.28);
+}
+
+html[data-theme='dark'] .btn--secondary:hover:not(:disabled) {
+  background: var(--color-surface-hover);
 }

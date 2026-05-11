@@ -27,7 +27,7 @@
   align-items: start;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1023px) {
   .support__grid {
     grid-template-columns: 1fr;
   }
@@ -51,6 +51,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   padding: 14px 16px;
   background: transparent;
   border: none;
@@ -59,6 +60,12 @@
   color: var(--color-text);
   text-align: left;
   cursor: pointer;
+}
+
+.faq__button > span:first-child {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
 }
 
 .faq__chevron {
@@ -142,6 +149,16 @@
   margin-top: 4px;
 }
 
+.support__chat-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.support__chat-form .chat-textarea {
+  margin-bottom: 0;
+}
+
 .chat-textarea {
   width: 100%;
   min-height: 80px;
@@ -166,7 +183,7 @@
   gap: 16px;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 1023px) {
   .contacts {
     grid-template-columns: 1fr;
   }
@@ -196,4 +213,16 @@
 
 .contacts__link:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 479px) {
+  .support__greeting {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .faq__button {
+    padding: 12px 14px;
+    font-size: 15px;
+  }
 }

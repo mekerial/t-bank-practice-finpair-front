@@ -131,15 +131,23 @@ export default function SupportPage() {
             </div>
           </div>
 
-          <textarea
-            className="chat-textarea"
-            placeholder="Введите ваше сообщение..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-          <Button variant="primary" fullWidth onClick={onSendMessage} disabled={isSending}>
-            {isSending ? 'Отправка…' : 'Отправить сообщение'}
-          </Button>
+          <form
+            className="support__chat-form"
+            onSubmit={(e) => {
+              e.preventDefault()
+              void onSendMessage()
+            }}
+          >
+            <textarea
+              className="chat-textarea"
+              placeholder="Введите ваше сообщение..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <Button type="submit" variant="primary" fullWidth disabled={isSending}>
+              {isSending ? 'Отправка…' : 'Отправить сообщение'}
+            </Button>
+          </form>
           {sendState.error && <p className="auth-form__common-error">{sendState.error}</p>}
           {sendState.success && <p>{sendState.success}</p>}
         </Card>

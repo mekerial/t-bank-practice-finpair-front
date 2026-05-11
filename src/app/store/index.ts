@@ -6,7 +6,8 @@ export {
   registerUser,
   logout,
   logoutUser,
-  tryRestoreSession
+  tryRestoreSession,
+  fetchAuthUser
 } from './slices/authSlice'
 export type { AuthUser } from '../../shared/api/authApi'
 export {
@@ -17,6 +18,9 @@ export {
 export {
   fetchGoals,
   createGoal,
+  completeGoal,
+  deleteGoal,
   clearCreateGoalError,
-  setMainGoal
+  setMainGoal,
+  clearMainGoal
 } from './slices/goalsSlice'

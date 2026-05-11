@@ -90,11 +90,13 @@ export default function SettingsPage() {
   const [copied, setCopied] = useState(false)
   const [inviteCode, setInviteCode] = useState('FINPAIR-LOADING')
   const [submitError, setSubmitError] = useState('')
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [partnerInviteCode, setPartnerInviteCode] = useState('')
   const [connectionMode, setConnectionMode] = useState<'create' | 'join'>('create')
   const [partnerActionError, setPartnerActionError] = useState('')
   const [partnerActionSuccess, setPartnerActionSuccess] = useState('')
   const formRef = useRef<HTMLFormElement | null>(null)
+  const saveSuccessRef = useRef<HTMLParagraphElement | null>(null)
 
   const defaultSettings: SettingsResult = {
     currency: 'RUB',
@@ -153,6 +155,20 @@ export default function SettingsPage() {
   })
 
   useEffect(() => {
+    if (!saveSuccess) return
+    const id = window.setTimeout(() => setSaveSuccess(false), 4000)
+    return () => window.clearTimeout(id)
+  }, [saveSuccess])
+
+  useEffect(() => {
+    if (!saveSuccess) return
+    saveSuccessRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest'
+    })
+  }, [saveSuccess])
+
+  useEffect(() => {
     if (!data) return
     setInviteCode(data.couple.inviteCode)
     reset({
@@ -179,6 +195,7 @@ export default function SettingsPage() {
 
   const onSubmit = async (formData: SettingsFormValues) => {
     setSubmitError('')
+    setSaveSuccess(false)
     const myIncome = Number(formData.myIncome.trim())
     if (Number.isNaN(myIncome)) {
       setSubmitError('Введите корректный доход')
@@ -209,12 +226,14 @@ export default function SettingsPage() {
           : [])
       ])
       await refetch()
+      setSaveSuccess(true)
     } catch {
       setSubmitError('Не удалось сохранить настройки. Попробуйте снова.')
     }
   }
 
   const onInvalid = () => {
+    setSaveSuccess(false)
     setSubmitError('Исправьте ошибки в форме и попробуйте снова')
 
     const top = formRef.current?.offsetTop ?? 0
@@ -246,11 +265,6 @@ export default function SettingsPage() {
       if (freshCode) {
         setInviteCode(freshCode)
       }
-      setPartnerActionSuccess(
-        freshCode
-          ? `Код приглашения: ${freshCode}`
-          : 'Код создан — скопируйте его и отправьте партнёру.'
-      )
       refetch()
     } catch {
       setPartnerActionError('Не удалось создать код. Попробуйте ещё раз.')
@@ -288,6 +302,14 @@ export default function SettingsPage() {
       <form
         ref={formRef}
         onSubmit={handleSubmit(onSubmit, onInvalid)}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter' || e.defaultPrevented) return
+          const el = e.target as HTMLElement
+          if (!el.closest('.invite-connect')) return
+          if (el.id === 'partner-invite-code') return
+          if (el.closest('button')) return
+          e.preventDefault()
+        }}
         className="settings__form"
       >
         {submitError && (
@@ -348,11 +370,16 @@ export default function SettingsPage() {
                     render={({ field }) => (
                       <Input
                         id="a-income"
-                        label="Ваш месячный доход"
-                        type="number"
+                        label="Ваш месячный доход (для долей расходов)"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="off"
                         placeholder="Введите доход"
                         value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
+                        onChange={(e) =>
+                          field.onChange(e.target.value.replace(/\D/g, ''))
+                        }
+                        onWheel={(e) => e.preventDefault()}
                       />
                     )}
                   />
@@ -366,16 +393,16 @@ export default function SettingsPage() {
             <div className="profile">
               <div className="profile__head">
                 <div className="profile__avatar profile__avatar--b">
-                  {(partnerMember?.name ?? 'Партнер')
+                  {(partnerMember?.name ?? 'Партнёр')
                     .split(/\s+/)
                     .map((w) => w[0])
                     .join('')
                     .slice(0, 2)}
                 </div>
                 <div>
-                  <div className="profile__name">{partnerMember?.name ?? 'Партнер'}</div>
+                  <div className="profile__name">{partnerMember?.name ?? 'Партнёр'}</div>
                   <div className="profile__sub">
-                    {hasPartner ? 'Профиль партнера' : 'Ожидает подключения'}
+                    {hasPartner ? 'Профиль партнёра' : 'Ожидает подключения'}
                   </div>
                 </div>
               </div>
@@ -386,7 +413,7 @@ export default function SettingsPage() {
                     id="b-email"
                     label="Email"
                     type="email"
-                    placeholder={partnerMember?.email ?? 'Партнер не подключен'}
+                    placeholder={partnerMember?.email ?? 'Партнёр не подключён'}
                     value={partnerMember?.email ?? ''}
                     onChange={() => {}}
                     readOnly
@@ -396,12 +423,12 @@ export default function SettingsPage() {
                 <div>
                   <Input
                     id="b-income"
-                    label="Месячный доход партнера"
+                    label="Месячный доход партнёра"
                     type="text"
-                    placeholder="Доход партнера задается из его аккаунта"
+                    placeholder="Доход партнёра задаётся в его аккаунте"
                     value={
                       hasPartner
-                        ? 'Изменяется в аккаунте партнера'
+                        ? 'Изменяется в аккаунте партнёра'
                         : 'Станет доступно после подключения'
                     }
                     onChange={() => {}}
@@ -496,6 +523,12 @@ export default function SettingsPage() {
                       placeholder="Например: FINPAIR-A1B2C3"
                       value={partnerInviteCode}
                       onChange={(e) => setPartnerInviteCode(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          void handleJoinByCode()
+                        }
+                      }}
                     />
                     <Button
                       type="button"
@@ -618,9 +651,21 @@ export default function SettingsPage() {
         </div>
 
         <div className="settings__actions">
-          <Button type="submit" variant="primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Сохранение...' : 'Сохранить'}
-          </Button>
+          <div className="settings__actions-submit">
+            <Button type="submit" variant="primary" disabled={isSubmitting}>
+              {isSubmitting ? 'Сохранение...' : 'Сохранить'}
+            </Button>
+            {saveSuccess && (
+              <p
+                ref={saveSuccessRef}
+                className="settings__save-feedback"
+                role="status"
+                aria-live="polite"
+              >
+                Изменения сохранены.
+              </p>
+            )}
+          </div>
         </div>
       </form>
       </AsyncDataView>

@@ -26,7 +26,7 @@ export function isHouseholdMissingError(error: unknown): boolean {
       requestUrl.includes('/analytics')
 
     // Для экранов пары/аналитики/транзакций 404 обычно означает:
-    // household/couple для пользователя еще не создан.
+    // household/couple для пользователя ещё не создан.
     if (status === 404 && isDomainEndpoint) {
       return true
     }
@@ -40,8 +40,9 @@ export function isHouseholdMissingError(error: unknown): boolean {
 }
 
 export default function HouseholdRequiredNotice({
-  title = 'Сначала получите invite-код',
-  description = 'У вас пока нет общего household. Перейдите в Настройки, получите invite-код и отправьте его партнеру.',
+  title = 'Сначала получите код приглашения',
+  description =
+    'Пара в приложении ещё не создана. Откройте «Настройки», получите код приглашения и отправьте его партнёру.',
   onCoupleCreated
 }: HouseholdRequiredNoticeProps) {
   const [isCreating, setIsCreating] = useState(false)
@@ -72,7 +73,7 @@ export default function HouseholdRequiredNotice({
             onClick={handleCreateAndContinue}
             disabled={isCreating}
           >
-            {isCreating ? 'Создаем invite-код…' : 'Получить invite-код и продолжить'}
+            {isCreating ? 'Создаём код приглашения…' : 'Получить код и продолжить'}
           </button>
           <Link to={ROUTES.SETTINGS} className="btn btn--secondary household-required__btn">
             Перейти в настройки

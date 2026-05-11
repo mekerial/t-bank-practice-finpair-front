@@ -3,6 +3,10 @@ import type { FinancialLoad, Recommendation } from '../lib/financeView'
 import axios from 'axios'
 import { fetchTransactionsRequest } from './transactionsApi'
 import { toRussianCategoryName } from '../lib/categoryLocalization'
+import {
+  calendarMonthTitleRu,
+  totalsForCalendarMonthFromApi
+} from '../lib/transactionMonthTotals'
 
 interface ApiResponse<T> {
   data: T
@@ -35,6 +39,8 @@ export interface DashboardMainExpense {
 
 export interface DashboardPageData {
   financialLoad: FinancialLoad
+  /** Подзаголовок для блока «Ежемесячный обзор» — за какой месяц посчитаны цифры. */
+  overviewMonthLabel: string
   recommendations: Recommendation[]
   mainExpenses: DashboardMainExpense[]
   partnerStats: Array<{
@@ -72,6 +78,7 @@ export async function fetchDashboard(): Promise<DashboardPageData> {
           loadPercent: 0,
           partnerSplit: { a: 0, b: 0 }
         },
+        overviewMonthLabel: calendarMonthTitleRu(),
         recommendations: [
           {
             id: 1,
@@ -133,6 +140,11 @@ export async function fetchDashboard(): Promise<DashboardPageData> {
   const totalExpenseForShare =
     (d.totalExpense ?? 0) > 0 ? (d.totalExpense ?? 0) : expensesFromTransactions
 
+  const now = new Date()
+  const overviewMonthLabel = calendarMonthTitleRu(now)
+  const monthlyFromTx = totalsForCalendarMonthFromApi(transactions, now)
+  const hasTxData = transactions.length > 0
+
   const topExpenses = Array.from(categoryRows.entries())
     .map(([category, value], index) => {
       const ownerIndex = partners.findIndex((p) => p.userId === value.userId)
@@ -157,10 +169,12 @@ export async function fetchDashboard(): Promise<DashboardPageData> {
     .slice(0, 5)
 
   const financialLoad: FinancialLoad = {
-    totalIncome: d.totalIncome ?? 0,
-    totalExpense: d.totalExpense ?? 0,
-    balance: d.balance ?? 0,
-    loadPercent: toLoadPercent(d.financialLoadPercent ?? 0),
+    totalIncome: hasTxData ? monthlyFromTx.income : (d.totalIncome ?? 0),
+    totalExpense: hasTxData ? monthlyFromTx.expense : (d.totalExpense ?? 0),
+    balance: hasTxData ? monthlyFromTx.balance : (d.balance ?? 0),
+    loadPercent: hasTxData
+      ? toLoadPercent(monthlyFromTx.financialLoadPercent)
+      : toLoadPercent(d.financialLoadPercent ?? 0),
     partnerSplit: {
       a: partners[0]
         ? (normalizedShareByUserId.get(partners[0].userId) ?? 0)
@@ -171,14 +185,16 @@ export async function fetchDashboard(): Promise<DashboardPageData> {
     }
   }
 
-  const loadPercent = d.financialLoadPercent ?? 0
+  const loadPercent = hasTxData
+    ? monthlyFromTx.financialLoadPercent
+    : (d.financialLoadPercent ?? 0)
   const recommendations: Recommendation[] = [
     {
       id: 1,
       text:
         loadPercent >= 75
-          ? 'Нагрузка высокая: проверьте крупные расходы и временно сократите необязательные траты.'
-          : 'Нагрузка в норме: удерживайте текущий темп и продолжайте контролировать категории расходов.'
+          ? 'Нагрузка высокая: проверьте крупные расходы и на время сократите необязательные траты.'
+          : 'Нагрузка в норме: удерживайте темп и следите за категориями расходов.'
     },
     {
       id: 2,
@@ -191,8 +207,8 @@ export async function fetchDashboard(): Promise<DashboardPageData> {
       id: 3,
       text:
         (d.partnerSummary?.length ?? 0) > 1
-          ? 'Сверяйте вклад партнеров в Настройках и при необходимости меняйте способ деления расходов.'
-          : 'Подключите партнера по invite-коду, чтобы видеть совместную аналитику и общий прогресс.'
+          ? 'Сверяйте вклад партнёров в «Настройках» и при необходимости меняйте способ деления расходов.'
+          : 'Подключите партнёра по коду приглашения, чтобы видеть совместную аналитику и общий прогресс.'
     }
   ]
 
@@ -208,6 +224,7 @@ export async function fetchDashboard(): Promise<DashboardPageData> {
 
   return {
     financialLoad,
+    overviewMonthLabel,
     recommendations,
     mainExpenses,
     partnerStats: d.partnerSummary ?? []

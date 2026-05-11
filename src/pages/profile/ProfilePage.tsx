@@ -1,7 +1,10 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
 import Card from '../../shared/ui/Card'
+import Button from '../../shared/ui/Button'
+import Input from '../../shared/ui/Input'
 import AsyncDataView from '../../shared/ui/AsyncDataView'
 import { useAsyncData } from '../../shared/hooks/useAsyncData'
 import {
@@ -9,25 +12,74 @@ import {
   type CoupleMember,
   fetchCoupleRequest,
   fetchSettingsRequest,
-  fetchUserProfileRequest
+  fetchUserProfileRequest,
+  updateUserProfileRequest
 } from '../../shared/api/settingsApi'
-import { fetchDashboard } from '../../shared/api/dashboardApi'
+import { changeEmailRequest } from '../../shared/api/authApi'
 import { ROUTES } from '../../shared/config/routes'
+import { getErrorMessage } from '../../shared/lib/asyncUtils'
+import { fetchAuthUser, useAppDispatch } from '../../app/store'
+import { isValidHouseholdId } from '../../shared/lib/householdId'
 import './profile.css'
 
-function splitTypeLabel(value: string | undefined): string {
-  if (value === 'income' || value === 'income_ratio') return 'По доходу'
-  if (value === 'custom') return 'Индивидуально'
-  return '50/50'
+interface NameFormValues {
+  name: string
 }
 
-function formatMoney(value: number | undefined, currency: 'RUB' | 'USD' | 'EUR' = 'RUB'): string {
-  if (value === undefined || Number.isNaN(value)) return '—'
-  const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '₽'
-  return `${new Intl.NumberFormat('ru-RU').format(Math.round(value))} ${symbol}`
+interface EmailFormValues {
+  newEmail: string
+  password: string
+}
+
+function splitExpensesLabel(split: CoupleDetails['splitType']): string {
+  switch (split) {
+    case 'equal':
+      return 'Поровну'
+    case 'income':
+    case 'income_ratio':
+      return 'По доходу'
+    case 'custom':
+      return 'Свои доли'
+    default:
+      return '—'
+  }
+}
+
+function greetingName(name: string | undefined, email: string | undefined): string {
+  const n = (name ?? '').trim()
+  if (n) return n.split(/\s+/)[0] ?? n
+  const local = (email ?? '').split('@')[0]?.trim()
+  return local || 'Пользователь'
+}
+
+function currencyLabel(code: string | undefined): string {
+  const c = (code ?? 'RUB').toUpperCase()
+  if (c === 'RUB') return 'Рубли (₽)'
+  if (c === 'USD') return 'Доллары ($)'
+  if (c === 'EUR') return 'Евро (€)'
+  return c
+}
+
+function initialsFromUser(name: string | undefined, email: string | undefined): string {
+  const n = (name ?? '').trim()
+  if (n) {
+    const parts = n.split(/\s+/).filter(Boolean)
+    if (parts.length >= 2) {
+      return (parts[0]![0]! + parts[1]![0]!).toUpperCase()
+    }
+    return n.slice(0, 2).toUpperCase()
+  }
+  const e = (email ?? '').trim()
+  return e ? e.slice(0, 2).toUpperCase() : '?'
 }
 
 export default function ProfilePage() {
+  const dispatch = useAppDispatch()
+  const [nameMessage, setNameMessage] = useState('')
+  const [nameError, setNameError] = useState('')
+  const [emailMessage, setEmailMessage] = useState('')
+  const [emailError, setEmailError] = useState('')
+
   const defaultCouple: CoupleDetails = {
     id: '',
     inviteCode: '—',
@@ -39,7 +91,7 @@ export default function ProfilePage() {
   }
 
   const { data, status, error, refetch } = useAsyncData('profile', async () => {
-    const [user, settings, couple, dashboard] = await Promise.all([
+    const [user, settings, couple] = await Promise.all([
       fetchUserProfileRequest(),
       fetchSettingsRequest(),
       fetchCoupleRequest().catch((e) => {
@@ -47,56 +99,114 @@ export default function ProfilePage() {
           return defaultCouple
         }
         throw e
-      }),
-      fetchDashboard().catch(() => null)
+      })
     ])
-    return { user, settings, couple, dashboard }
+    return { user, settings, couple }
   })
 
-  const members: CoupleMember[] = data?.couple.members ?? data?.couple.users ?? []
-  const hasPartner = members.length > 1
+  const {
+    register: registerName,
+    handleSubmit: handleSubmitName,
+    reset: resetName,
+    formState: { isSubmitting: nameSubmitting }
+  } = useForm<NameFormValues>({
+    defaultValues: { name: '' },
+    mode: 'onBlur'
+  })
+
+  const {
+    register: registerEmail,
+    handleSubmit: handleSubmitEmail,
+    reset: resetEmail,
+    formState: { isSubmitting: emailSubmitting, errors: emailFieldErrors }
+  } = useForm<EmailFormValues>({
+    defaultValues: { newEmail: '', password: '' },
+    mode: 'onBlur'
+  })
+
+  useEffect(() => {
+    if (!data?.user) return
+    resetName({ name: data.user.name ?? '' })
+    resetEmail({ newEmail: '', password: '' })
+  }, [data?.user, resetName, resetEmail])
+
   const currentUser = data?.user
-  const currentMember = useMemo(() => {
-    if (!currentUser) return undefined
-    return members.find((m) => m.userId === currentUser.id)
-  }, [members, currentUser])
-  const statsByUserId = useMemo(() => {
-    const map = new Map<
-      string,
-      { income: number; expense: number; sharePercent: number }
-    >()
-    for (const item of data?.dashboard?.partnerStats ?? []) {
-      map.set(item.userId, {
-        income: item.income,
-        expense: item.expense,
-        sharePercent: item.sharePercent
-      })
+  const displayInitials = initialsFromUser(currentUser?.name, currentUser?.email)
+
+  const household = data?.couple
+  const hasHousehold = isValidHouseholdId(household?.id)
+  const members: CoupleMember[] = household?.members?.length
+    ? household.members
+    : (household?.users ?? [])
+  const householdCurrency = household?.currency ?? data?.settings.currency ?? 'RUB'
+
+  const memberChips = useMemo(() => {
+    return members.map((m) => ({
+      userId: m.userId,
+      initials: initialsFromUser(m.name, m.email),
+      title: (m.name ?? '').trim() || m.email?.split('@')[0] || 'Участник'
+    }))
+  }, [members])
+
+  const onSaveName = handleSubmitName(async (values) => {
+    setNameError('')
+    setNameMessage('')
+    try {
+      await updateUserProfileRequest({ name: values.name.trim() })
+      setNameMessage('Имя сохранено.')
+      await refetch()
+      void dispatch(fetchAuthUser())
+    } catch (e) {
+      setNameMessage('')
+      setNameError(getErrorMessage(e))
     }
-    return map
-  }, [data?.dashboard?.partnerStats])
-  const bothPartners = useMemo(() => {
-    return members.map((m) => {
-      const stats = statsByUserId.get(m.userId)
-      const income =
-        currentUser && m.userId === currentUser.id ? currentUser.income : stats?.income
-      return {
-        ...m,
-        income,
-        expense: stats?.expense,
-        sharePercent: stats?.sharePercent
-      }
-    })
-  }, [members, statsByUserId, currentUser])
-  const currency = data?.settings.currency ?? 'RUB'
-  const totalIncome = data?.dashboard?.financialLoad.totalIncome
-  const totalExpense = data?.dashboard?.financialLoad.totalExpense
-  const balance = data?.dashboard?.financialLoad.balance
-  const totalMembers = members.length
-  const hasInviteCode = Boolean(data?.couple.inviteCode && data.couple.inviteCode !== '—')
+  })
+
+  const onSaveEmail = handleSubmitEmail(async (values) => {
+    setEmailError('')
+    setEmailMessage('')
+    const next = values.newEmail.trim().toLowerCase()
+    const current = (currentUser?.email ?? '').trim().toLowerCase()
+    if (!next) {
+      setEmailError('Введите новый адрес почты.')
+      return
+    }
+    if (next === current) {
+      setEmailError('Новый адрес совпадает с текущим.')
+      return
+    }
+    try {
+      const result = await changeEmailRequest({
+        email: values.newEmail.trim(),
+        password: values.password
+      })
+      setEmailMessage(
+        `Почта для входа обновлена: ${result.email}. Используйте этот адрес при следующем входе.`
+      )
+      resetEmail({ newEmail: '', password: '' })
+      await refetch()
+      void dispatch(fetchAuthUser())
+    } catch (e) {
+      setEmailMessage('')
+      setEmailError(getErrorMessage(e))
+    }
+  })
 
   return (
     <div className="profile-page">
-      <h1 className="profile-page__title">Личный кабинет</h1>
+      <header className="profile-page__head">
+        <div className="profile-page__title-block">
+          <h1 className="profile-page__title">Личный кабинет</h1>
+          {currentUser ? (
+            <p className="profile-page__tagline">
+              {greetingName(currentUser.name, currentUser.email)}, здесь ваш профиль и быстрый доступ к разделам.
+            </p>
+          ) : null}
+        </div>
+        <Link className="profile-page__settings-link" to={ROUTES.SETTINGS}>
+          Доход пары и настройки
+        </Link>
+      </header>
 
       <AsyncDataView
         status={status}
@@ -104,101 +214,150 @@ export default function ProfilePage() {
         onRetry={refetch}
         loadingLabel="Загружаем профиль…"
       >
-        <div className="profile-page__kpis">
-          <div className="profile-kpi">
-            <div className="profile-kpi__label">Статус пары</div>
-            <div className="profile-kpi__value">
-              {hasPartner ? 'Подключена' : 'Не подключена'}
+        <div className="profile-page__band" aria-label="Сводка и навигация">
+          <div className="profile-page__tiles">
+            <div className="profile-page__tile">
+              <div className="profile-page__tile-label">Валюта пары</div>
+              <div className="profile-page__tile-value">
+                {hasHousehold ? currencyLabel(householdCurrency) : '—'}
+              </div>
+            </div>
+            <div className="profile-page__tile">
+              <div className="profile-page__tile-label">Деление расходов</div>
+              <div className="profile-page__tile-value">
+                {hasHousehold ? splitExpensesLabel(household.splitType) : '—'}
+              </div>
+            </div>
+            <div className="profile-page__tile profile-page__tile--members">
+              <div className="profile-page__tile-label">Участники</div>
+              {hasHousehold && memberChips.length > 0 ? (
+                <div className="profile-page__member-chips">
+                  {memberChips.map((m) => (
+                    <span
+                      key={m.userId}
+                      className="profile-page__member-chip"
+                      title={m.title}
+                    >
+                      {m.initials}
+                    </span>
+                  ))}
+                  <span className="profile-page__member-meta">{memberChips.length} чел.</span>
+                </div>
+              ) : (
+                <div className="profile-page__tile-value profile-page__tile-value--muted">
+                  Создайте пару в настройках
+                </div>
+              )}
             </div>
           </div>
-          <div className="profile-kpi">
-            <div className="profile-kpi__label">Общий доход</div>
-            <div className="profile-kpi__value">{formatMoney(totalIncome, currency)}</div>
-          </div>
-          <div className="profile-kpi">
-            <div className="profile-kpi__label">Общие расходы</div>
-            <div className="profile-kpi__value">{formatMoney(totalExpense, currency)}</div>
-          </div>
-          <div className="profile-kpi">
-            <div className="profile-kpi__label">Баланс</div>
-            <div className="profile-kpi__value">{formatMoney(balance, currency)}</div>
-          </div>
+          <nav className="profile-page__shortcuts" aria-label="Быстрые разделы">
+            <Link className="profile-page__shortcut" to={ROUTES.DASHBOARD}>
+              Дашборд
+            </Link>
+            <Link className="profile-page__shortcut" to={ROUTES.TRANSACTIONS}>
+              Транзакции
+            </Link>
+            <Link className="profile-page__shortcut" to={ROUTES.GOALS}>
+              Цели
+            </Link>
+            <Link className="profile-page__shortcut" to={ROUTES.ANALYTICS}>
+              Аналитика
+            </Link>
+            <Link className="profile-page__shortcut" to={ROUTES.SETTINGS}>
+              Настройки
+            </Link>
+            <Link className="profile-page__shortcut" to={ROUTES.SUPPORT}>
+              Помощь
+            </Link>
+          </nav>
         </div>
 
-        <div className="profile-page__actions">
-          <Link to={ROUTES.SETTINGS} className="btn btn--primary profile-page__action-btn">
-            Настройки пары
-          </Link>
-          <Link to={ROUTES.ANALYTICS} className="btn btn--secondary profile-page__action-btn">
-            Открыть аналитику
-          </Link>
-        </div>
-
-        <Card title="Участники пары">
-          <div className="profile-page__members">
-            {bothPartners.map((m) => (
-              <div key={m.userId} className="profile-page__member">
-                <div className="profile-page__member-head">
-                  <div className="profile-page__avatar">
-                    {(m.name || m.email || 'U')
-                      .split(/\s+/)
-                      .map((w) => w[0])
-                      .join('')
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="profile-page__member-name">{m.name || 'Пользователь'}</div>
-                  </div>
-                  {m.userId === currentUser?.id && (
-                    <span className="profile-page__you-badge">Это вы</span>
-                  )}
+        <Card title="Профиль" className="profile-page__sheet">
+          <div className="profile-page__sheet-body">
+            <div className="profile-page__identity">
+              <div className="profile-page__identity-top">
+                <div className="profile-page__avatar" aria-hidden>
+                  {displayInitials}
                 </div>
-                <div className="profile-page__row">
-                  <span>Email</span>
-                  <strong>{m.email || '—'}</strong>
-                </div>
-                <div className="profile-page__row">
-                  <span>Доход</span>
-                  <strong>{formatMoney(m.income, currency)}</strong>
-                </div>
-                <div className="profile-page__row">
-                  <span>Расходы за период</span>
-                  <strong>{formatMoney(m.expense, currency)}</strong>
+                <div className="profile-page__identity-text">
+                  <p className="profile-page__display-name">
+                    {(currentUser?.name ?? '').trim() || 'Без имени'}
+                  </p>
+                  <p className="profile-page__display-mail">{currentUser?.email ?? '—'}</p>
                 </div>
               </div>
-            ))}
-          </div>
-        </Card>
+              <h4 className="profile-page__section-title">Как вас видит партнёр</h4>
+              <form className="profile-page__form profile-page__form--compact" onSubmit={onSaveName} noValidate>
+                <Input
+                  id="profile-name"
+                  label="Имя"
+                  autoComplete="name"
+                  {...registerName('name', { maxLength: 100 })}
+                />
+                {nameError ? (
+                  <p className="profile-page__error" role="alert">
+                    {nameError}
+                  </p>
+                ) : null}
+                {nameMessage ? <p className="profile-page__success">{nameMessage}</p> : null}
+                <div className="profile-page__form-actions profile-page__form-actions--compact">
+                  <Button type="submit" disabled={nameSubmitting}>
+                    {nameSubmitting ? 'Сохранение…' : 'Сохранить имя'}
+                  </Button>
+                </div>
+              </form>
+            </div>
 
-        <Card title="Пара и настройки">
-          <p className="profile-page__hint">
-            Ключевые параметры пары и быстрый доступ к подключению в одном месте.
-          </p>
-          <div className="profile-page__rows">
-            <div className="profile-page__row">
-              <span>Ваш email</span>
-              <strong>{currentMember?.email ?? currentUser?.email ?? '—'}</strong>
-            </div>
-            <div className="profile-page__row">
-              <span>Схема деления</span>
-              <strong>{splitTypeLabel(data?.couple.splitType)}</strong>
-            </div>
-            <div className="profile-page__row">
-              <span>Валюта</span>
-              <strong>{data?.settings.currency ?? 'RUB'}</strong>
-            </div>
-            <div className="profile-page__row">
-              <span>Участников</span>
-              <strong>{totalMembers}</strong>
-            </div>
-          </div>
-          <div className="profile-page__code-box">
-            <div>
-              <div className="profile-page__code-label">Invite-код пары</div>
-              <div className="profile-page__code">
-                {hasInviteCode ? data?.couple.inviteCode : 'Будет доступен после создания пары'}
-              </div>
+            <div className="profile-page__rail" aria-hidden />
+
+            <div className="profile-page__credentials">
+              <h4 className="profile-page__section-title">Смена почты для входа</h4>
+              <p className="profile-page__hint">
+                Вход в приложение после смены — только с нового адреса; пароль остаётся прежним.
+              </p>
+              <form className="profile-page__form profile-page__form--compact" onSubmit={onSaveEmail} noValidate>
+                <Input
+                  id="profile-new-email"
+                  label="Новая почта"
+                  type="email"
+                  autoComplete="off"
+                  {...registerEmail('newEmail', {
+                    required: 'Укажите новую почту',
+                    pattern: {
+                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                      message: 'Похоже на некорректный адрес'
+                    }
+                  })}
+                />
+                <Input
+                  id="profile-email-password"
+                  label="Текущий пароль"
+                  type="password"
+                  autoComplete="current-password"
+                  {...registerEmail('password', { required: 'Введите пароль' })}
+                />
+                {emailFieldErrors.newEmail ? (
+                  <p className="profile-page__error" role="alert">
+                    {emailFieldErrors.newEmail.message}
+                  </p>
+                ) : null}
+                {emailFieldErrors.password ? (
+                  <p className="profile-page__error" role="alert">
+                    {emailFieldErrors.password.message}
+                  </p>
+                ) : null}
+                {emailError ? (
+                  <p className="profile-page__error" role="alert">
+                    {emailError}
+                  </p>
+                ) : null}
+                {emailMessage ? <p className="profile-page__success">{emailMessage}</p> : null}
+                <div className="profile-page__form-actions profile-page__form-actions--compact">
+                  <Button type="submit" variant="primary" disabled={emailSubmitting}>
+                    {emailSubmitting ? 'Сохранение…' : 'Сохранить почту'}
+                  </Button>
+                </div>
+              </form>
             </div>
           </div>
         </Card>

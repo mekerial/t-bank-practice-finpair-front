@@ -3,6 +3,7 @@ import axios from 'axios'
 import {
   formatMoneyPlain,
   type CategorySlice,
+  type HouseholdCurrency,
   type PartnerComparePoint
 } from '../../shared/lib/financeView'
 import { isValidHouseholdId } from '../../shared/lib/householdId'
@@ -15,6 +16,35 @@ import AsyncDataView from '../../shared/ui/AsyncDataView'
 import { fetchCoupleRequest } from '../../shared/api/settingsApi'
 import type { CoupleDetails } from '../../shared/api/settingsApi'
 import './analytics.css'
+
+function chartYMax(values: number[]): number {
+  const finite = values.filter((v) => Number.isFinite(v))
+  const raw = finite.length > 0 ? Math.max(...finite, 0) : 0
+  return Number.isFinite(raw) ? raw : 0
+}
+
+function formatMonthTick(monthKey: string): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(monthKey.trim())
+  if (!m) return monthKey
+  const labels = [
+    'янв',
+    'фев',
+    'мар',
+    'апр',
+    'май',
+    'июн',
+    'июл',
+    'авг',
+    'сен',
+    'окт',
+    'ноя',
+    'дек'
+  ]
+  const mi = Number(m[2]) - 1
+  if (mi < 0 || mi > 11) return monthKey
+  const year = m[1]
+  return `${labels[mi]}\u00A0${year}`
+}
 
 function DoubleLineChart({
   data,
@@ -32,7 +62,7 @@ function DoubleLineChart({
   const width = 800
   const height = 260
   const padding = { top: 20, right: 16, bottom: 30, left: 50 }
-  const max = Math.max(...data.flatMap((d) => [d.a, d.b]), 0)
+  const max = chartYMax(data.flatMap((d) => [d.a, d.b]))
   const min = 0
   const denominator = Math.max(max - min, 1)
   const xStep =
@@ -128,7 +158,7 @@ function DoubleLineChart({
             textAnchor="middle"
             fill="var(--color-chart-tick)"
           >
-            {p.month}
+            {formatMonthTick(p.month)}
           </text>
         ))}
       </svg>
@@ -159,7 +189,7 @@ function PieChart({ data }: { data: CategorySlice[] }) {
 
   if (data.length === 1) {
     return (
-      <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
+      <svg viewBox={`0 0 ${size} ${size}`} className="chart">
         <circle cx={cx} cy={cy} r={r} fill={data[0].color} />
       </svg>
     )
@@ -184,7 +214,7 @@ function PieChart({ data }: { data: CategorySlice[] }) {
   })
 
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
+    <svg viewBox={`0 0 ${size} ${size}`} className="chart">
       {arcs.map((a, i) => (
         <path key={i} d={a.d} fill={a.color} />
       ))}
@@ -203,7 +233,7 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
   const width = 500
   const height = 260
   const padding = { top: 20, right: 16, bottom: 30, left: 50 }
-  const max = Math.max(...source.flatMap((d) => [d.a, d.b]), 0)
+  const max = chartYMax(source.flatMap((d) => [d.a, d.b]))
   const min = 0
   const plotW = width - padding.left - padding.right
   const plotH = height - padding.top - padding.bottom
@@ -306,7 +336,7 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
             textAnchor="middle"
             fill="var(--color-chart-tick)"
           >
-            {d.month}
+            {formatMonthTick(d.month)}
           </text>
         )
       })}
@@ -317,11 +347,13 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
 function AnalyticsPageContent({
   data,
   partnerALabel,
-  partnerBLabel
+  partnerBLabel,
+  currency
 }: {
   data: AnalyticsPageData
   partnerALabel: string
   partnerBLabel: string
+  currency: HouseholdCurrency
 }) {
   const { kpi, categories, partnerCompare, insights } = data
 
@@ -358,7 +390,7 @@ function AnalyticsPageContent({
                   />
                   <span className="pie-legend__name">{c.name}</span>
                   <span className="pie-legend__value">
-                    {formatMoneyPlain(c.value)}
+                    {formatMoneyPlain(c.value, currency)}
                   </span>
                 </div>
               ))}
@@ -434,16 +466,18 @@ export default function AnalyticsPage() {
     }
   )
   const analyticsHouseholdKey = coupleData?.id
+  const currency: HouseholdCurrency = coupleData?.currency ?? 'RUB'
   const { data, status, error, refetch } = useAsyncData(
-    `analytics-${isValidHouseholdId(analyticsHouseholdKey) ? analyticsHouseholdKey : 'no-couple'}`,
+    `analytics-${isValidHouseholdId(analyticsHouseholdKey) ? analyticsHouseholdKey : 'no-couple'}-${currency}`,
     () =>
       isValidHouseholdId(analyticsHouseholdKey)
-        ? fetchAnalyticsPageData()
+        ? fetchAnalyticsPageData(currency)
         : Promise.resolve(emptyAnalytics)
   )
   const members = coupleData?.members ?? coupleData?.users ?? []
-  const partnerALabel = members[0]?.name ?? 'Партнер A'
-  const partnerBLabel = members[1]?.name ?? 'Партнер B'
+  const membersSorted = [...members].sort((a, b) => a.userId.localeCompare(b.userId))
+  const partnerALabel = membersSorted[0]?.name ?? 'Партнёр A'
+  const partnerBLabel = membersSorted[1]?.name ?? 'Партнёр B'
   return (
     <div className="analytics">
       <h1 className="analytics__title">Аналитика</h1>
@@ -459,6 +493,7 @@ export default function AnalyticsPage() {
             data={data}
             partnerALabel={partnerALabel}
             partnerBLabel={partnerBLabel}
+            currency={currency}
           />
         ) : null}
       </AsyncDataView>

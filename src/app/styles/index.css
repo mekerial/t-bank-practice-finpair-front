@@ -59,8 +59,18 @@
 
   --shadow-sm: 0 1px 3px rgba(26, 28, 35, 0.06);
   --shadow-card: 0 4px 24px rgba(26, 28, 35, 0.06);
+  /* Чуть заметнее hover у карточек, без «тяжёлой» тени */
+  --shadow-card-hover: 0 7px 24px rgba(26, 28, 35, 0.1);
+
+  /* Длительности анимаций (см. prefers-reduced-motion ниже) */
+  --motion-duration-fast: 0.17s;
+  --motion-duration-normal: 0.27s;
+  --motion-duration-slow: 0.38s;
+  --motion-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-ease-out: cubic-bezier(0.33, 1, 0.68, 1);
 
   --sidebar-width: 256px;
+  /* Порог «планшет и уже»: drawer и @media в layout.css — max-width: 1023px */
   --header-height: 93px;
 
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
@@ -170,6 +180,7 @@ html[data-theme='dark'] {
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
   --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-card-hover: 0 8px 30px rgba(0, 0, 0, 0.42);
 
   --color-error-bg: rgba(248, 113, 113, 0.12);
   --color-error-border: rgba(248, 113, 113, 0.35);
@@ -188,4 +199,57 @@ html[data-theme='dark'] .guest-welcome__hero {
     #1a1d26 45%,
     #151a24 100%
   );
+}
+
+/* Общая компактность страниц приложения на очень узких экранах */
+@media (max-width: 479px) {
+  .dashboard__title,
+  .transactions__title,
+  .analytics__title,
+  .goals__title,
+  .settings__title,
+  .support__title {
+    font-size: 22px;
+    line-height: 28px;
+    font-weight: 700;
+  }
+
+  .profile-page__title {
+    font-size: 20px;
+    line-height: 26px;
+  }
+
+  .transactions,
+  .analytics,
+  .goals,
+  .settings,
+  .support {
+    gap: 16px;
+  }
+
+  .guest-welcome {
+    gap: 24px;
+  }
+
+  .guest-welcome__hero-inner {
+    padding: 22px 16px 26px;
+  }
+
+  .guest-welcome__headline {
+    font-size: 22px;
+    line-height: 28px;
+  }
+
+  .auth-layout__brand-title {
+    font-size: 24px;
+    line-height: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-fast: 0.01ms;
+    --motion-duration-normal: 0.01ms;
+    --motion-duration-slow: 0.01ms;
+  }
 }

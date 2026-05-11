@@ -14,7 +14,7 @@ interface LoginForm {
 }
 
 interface LoginPageLocationState {
-  registered?: boolean
+  /** После регистрации подставляем email, без отдельного «успешно»-баннера */
   email?: string
 }
 
@@ -32,7 +32,7 @@ export default function LoginPage() {
     formState: { errors, isSubmitting }
   } = useForm<LoginForm>({
     defaultValues: {
-      email: locationState.registered ? locationState.email ?? '' : '',
+      email: locationState.email?.trim() ? locationState.email : '',
       password: ''
     },
     mode: 'onSubmit'
@@ -83,11 +83,6 @@ export default function LoginPage() {
         onSubmit={handleSubmit(onSubmit, onInvalid)}
         noValidate
       >
-        {locationState.registered && (
-          <p className="auth-form__info">
-            Аккаунт создан. Теперь войдите в систему, используя ваш email и пароль.
-          </p>
-        )}
         {formError && (
           <p className="auth-form__common-error">{formError}</p>
         )}

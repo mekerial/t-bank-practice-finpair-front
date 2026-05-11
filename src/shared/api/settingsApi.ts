@@ -10,6 +10,8 @@ interface ApiResponse<T> {
 export interface UserProfile {
   id: string
   email: string
+  /** Отображаемое имя; может отсутствовать у старых ответов API. */
+  name?: string
   income: number
 }
 
@@ -40,8 +42,16 @@ export async function fetchUserProfileRequest(): Promise<UserProfile> {
   return data.data
 }
 
+export async function updateUserProfileRequest(payload: {
+  income?: number
+  name?: string
+}): Promise<UserProfile> {
+  const { data } = await apiClient.patch<ApiResponse<UserProfile>>('/users/me', payload)
+  return data.data
+}
+
 export async function updateUserIncomeRequest(income: number): Promise<void> {
-  await apiClient.patch('/users/me', { income })
+  await updateUserProfileRequest({ income })
 }
 
 export async function fetchSettingsRequest(): Promise<SettingsResult> {

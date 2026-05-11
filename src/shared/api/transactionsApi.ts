@@ -23,9 +23,57 @@ interface ApiResponse<T> {
   meta: Record<string, unknown>
 }
 
-interface TransactionListResponse {
-  items: ApiTransaction[]
-  total?: number
+interface PagedTransactionsPayload {
+  items?: ApiTransaction[]
+  Items?: ApiTransaction[]
+  pagination?: Record<string, unknown>
+  Pagination?: Record<string, unknown>
+}
+
+function parseTransactionsPage(
+  body: unknown
+): { items: ApiTransaction[]; totalPages: number } {
+  const empty = { items: [] as ApiTransaction[], totalPages: 1 }
+
+  if (Array.isArray(body)) {
+    return { items: body, totalPages: 1 }
+  }
+
+  if (!body || typeof body !== 'object') return empty
+
+  const root = body as Record<string, unknown>
+  let payload: unknown = root.data ?? root.Data
+  if (
+    (payload === undefined || payload === null) &&
+    (root.items != null || root.Items != null)
+  ) {
+    payload = root
+  }
+
+  if (Array.isArray(payload)) {
+    return { items: payload as ApiTransaction[], totalPages: 1 }
+  }
+
+  if (!payload || typeof payload !== 'object') return empty
+
+  const p = payload as PagedTransactionsPayload
+  const rawItems = p.items ?? p.Items
+  const items = Array.isArray(rawItems) ? rawItems : []
+
+  const pagination = (p.pagination ?? p.Pagination) as
+    | Record<string, unknown>
+    | undefined
+  const totalPagesRaw =
+    pagination?.totalPages ?? pagination?.TotalPages
+  let totalPages = 1
+  if (typeof totalPagesRaw === 'number' && Number.isFinite(totalPagesRaw)) {
+    totalPages = Math.max(1, Math.floor(totalPagesRaw))
+  } else if (typeof totalPagesRaw === 'string' && totalPagesRaw.trim() !== '') {
+    const n = Number.parseInt(totalPagesRaw, 10)
+    if (Number.isFinite(n)) totalPages = Math.max(1, n)
+  }
+
+  return { items, totalPages }
 }
 
 export interface CreateTransactionDto {
@@ -47,22 +95,43 @@ export interface CreateHouseholdTransactionDto {
   date: string
 }
 
+const FETCH_PAGE_SIZE = 100
+
+/**
+ * Загружает все операции пользователя: API отдаёт постранично, фронт запрашивает все страницы.
+ * Дальнейшая разбивка по страницам списка — на экране «Транзакции» (клиентская пагинация).
+ */
 export async function fetchTransactionsRequest(params?: {
   type?: 'income' | 'expense'
-  page?: number
-  pageSize?: number
 }): Promise<ApiTransaction[]> {
-  const { data } = await apiClient.get<
-    ApiResponse<TransactionListResponse> | ApiTransaction[]
-  >('/transactions', { params })
+  const all: ApiTransaction[] = []
+  let page = 1
+  let totalPages = 1
 
-  if (Array.isArray(data)) {
-    return data
-  }
+  do {
+    const { data } = await apiClient.get<unknown>('/transactions', {
+      params: {
+        page,
+        pageSize: FETCH_PAGE_SIZE,
+        ...(params?.type ? { type: params.type } : {})
+      }
+    })
 
-  const payload = (data as ApiResponse<TransactionListResponse>).data
-  if (Array.isArray(payload)) return payload
-  return payload.items ?? []
+    const { items, totalPages: reportedTotal } = parseTransactionsPage(data)
+    all.push(...items)
+    totalPages = Math.max(1, reportedTotal)
+
+    if (items.length === 0) {
+      break
+    }
+
+    page += 1
+    if (page > 200) {
+      break
+    }
+  } while (page <= totalPages)
+
+  return all
 }
 
 export async function createTransactionRequest(

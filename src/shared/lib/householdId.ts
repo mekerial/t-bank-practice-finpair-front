@@ -1,9 +1,8 @@
 const EMPTY_GUID_COMPACT = '00000000000000000000000000000000'
 
-/**
- * Couple API для «нет пары» отдаёт Guid.Empty — это не реальный household.
- */
-export function isValidHouseholdId(id: string | undefined | null): boolean {
+export function isValidHouseholdId(
+  id: string | undefined | null
+): id is string {
   if (id === undefined || id === null) return false
   const trimmed = String(id).trim()
   if (!trimmed) return false

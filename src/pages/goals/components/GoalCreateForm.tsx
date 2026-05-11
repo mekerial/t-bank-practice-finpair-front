@@ -249,7 +249,7 @@ export default function GoalCreateForm({
                 checked={Boolean(field.value)}
                 onChange={(e) => field.onChange(e.target.checked)}
               />
-              <span>Сделать главной целью</span>
+              <span>Сделать главной</span>
             </label>
           )}
         />

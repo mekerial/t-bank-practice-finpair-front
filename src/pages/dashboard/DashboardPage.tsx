@@ -2,7 +2,8 @@ import Card from '../../shared/ui/Card'
 import axios from 'axios'
 import { IconBulb } from '../../shared/ui/icons'
 import {
-  formatMoneyPlain
+  formatMoneyPlain,
+  type HouseholdCurrency
 } from '../../shared/lib/financeView'
 import { isValidHouseholdId } from '../../shared/lib/householdId'
 import { useAsyncData } from '../../shared/hooks/useAsyncData'
@@ -13,6 +14,7 @@ import {
 import AsyncDataView from '../../shared/ui/AsyncDataView'
 import { fetchCoupleRequest } from '../../shared/api/settingsApi'
 import type { CoupleDetails } from '../../shared/api/settingsApi'
+import { calendarMonthTitleRu } from '../../shared/lib/transactionMonthTotals'
 import './dashboard.css'
 
 interface DonutChartProps {
@@ -20,7 +22,8 @@ interface DonutChartProps {
   b: number
 }
 
-function DonutChart({ a }: DonutChartProps) {
+function DonutChart({ a, b: _b }: DonutChartProps) {
+  void _b
   const size = 200
   const r = 72
   const c = 2 * Math.PI * r
@@ -29,8 +32,8 @@ function DonutChart({ a }: DonutChartProps) {
     <svg
       className="donut"
       viewBox={`0 0 ${size} ${size}`}
-      width={size}
-      height={size}
+      role="img"
+      aria-hidden
     >
       <circle
         cx={size / 2}
@@ -60,27 +63,29 @@ function DashboardContent({
   data,
   partnerALabel,
   partnerBLabel,
-  memberNameById
+  memberNameById,
+  currency
 }: {
   data: DashboardPageData
   partnerALabel: string
   partnerBLabel: string
   memberNameById: Map<string, string>
+  currency: HouseholdCurrency
 }) {
-  const { financialLoad, recommendations, mainExpenses } = data
+  const { financialLoad, recommendations, mainExpenses, overviewMonthLabel } = data
   const { totalIncome, balance, loadPercent, totalExpense, partnerSplit } =
     financialLoad
   const isOverloaded = totalExpense > totalIncome && totalIncome > 0
   const loadPercentDisplay = Math.min(Math.max(loadPercent, 0), 100)
   const overloadAmount = Math.max(totalExpense - totalIncome, 0)
   const loadHintLabel = isOverloaded
-    ? `перерасход: ${formatMoneyPlain(overloadAmount)}`
-    : formatMoneyPlain(totalExpense)
+    ? `перерасход: ${formatMoneyPlain(overloadAmount, currency)}`
+    : formatMoneyPlain(totalExpense, currency)
 
   return (
     <>
       <div className="dashboard__grid">
-        <Card title="Распределение нагрузки">
+        <Card title="Доли трат по операциям">
           <div className="dashboard__donut-wrap">
             <DonutChart a={partnerSplit.a} b={partnerSplit.b} />
             <div className="dashboard__legend">
@@ -103,11 +108,14 @@ function DashboardContent({
         </Card>
 
         <Card title="Ежемесячный обзор">
+          <p className="overview__caption">
+            За {overviewMonthLabel} — доходы и расходы только из операций этого календарного месяца.
+          </p>
           <div className="overview">
             <div className="overview__row">
               <span className="overview__label">Общий доход</span>
               <span className="overview__value">
-                {formatMoneyPlain(totalIncome)}
+                {formatMoneyPlain(totalIncome, currency)}
               </span>
             </div>
             <div className="overview__row">
@@ -122,7 +130,7 @@ function DashboardContent({
             <div className="overview__row">
               <span className="overview__label">Остаток</span>
               <span className="overview__value overview__value--accent">
-                {formatMoneyPlain(balance)}
+                {formatMoneyPlain(balance, currency)}
               </span>
             </div>
           </div>
@@ -165,7 +173,7 @@ function DashboardContent({
           {mainExpenses.map((e) => (
             <div key={`${e.id}-${e.userId ?? e.payer}`} className="expenses-table__row">
               <span className="expenses-table__category">{e.category}</span>
-              <span>{formatMoneyPlain(e.amount)}</span>
+              <span>{formatMoneyPlain(e.amount, currency)}</span>
               <span>
                 <span
                   className={
@@ -181,7 +189,7 @@ function DashboardContent({
               </span>
               <span>{e.share}%</span>
               <span className="expenses-table__right">
-                {formatMoneyPlain(e.fromBudget)}
+                {formatMoneyPlain(e.fromBudget, currency)}
               </span>
             </div>
           ))}
@@ -223,6 +231,7 @@ export default function DashboardPage() {
               loadPercent: 0,
               partnerSplit: { a: 0, b: 0 }
             },
+            overviewMonthLabel: calendarMonthTitleRu(),
             recommendations: [],
             mainExpenses: [],
             partnerStats: []
@@ -232,8 +241,9 @@ export default function DashboardPage() {
   const memberNameById = new Map<string, string>(
     members.map((m) => [m.userId, m.name])
   )
-  const partnerALabel = members[0]?.name ?? 'Партнер A'
-  const partnerBLabel = members[1]?.name ?? 'Партнер B'
+  const partnerALabel = members[0]?.name ?? 'Партнёр A'
+  const partnerBLabel = members[1]?.name ?? 'Партнёр B'
+  const currency: HouseholdCurrency = coupleData?.currency ?? 'RUB'
   return (
     <div className="dashboard">
       <h1 className="dashboard__title">Финансовая нагрузка</h1>
@@ -250,6 +260,7 @@ export default function DashboardPage() {
             partnerALabel={partnerALabel}
             partnerBLabel={partnerBLabel}
             memberNameById={memberNameById}
+            currency={currency}
           />
         ) : null}
       </AsyncDataView>

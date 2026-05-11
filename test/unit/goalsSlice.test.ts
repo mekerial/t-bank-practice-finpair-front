@@ -1,6 +1,7 @@
 import reducer, {
   clearCreateGoalError,
   createGoal,
+  deleteGoal,
   fetchGoals,
   type Goal
 } from '../../src/app/store/slices/goalsSlice'
@@ -50,6 +51,26 @@ describe('goalsSlice reducer', () => {
     expect(next.items[0].id).toBe('goal-2')
     expect(next.items[0].isMain).toBe(true)
     expect(next.items[1].isMain).toBe(false)
+  })
+
+  it('после удаления закреплённой цели не назначает другую «в фокусе»', () => {
+    const main: Goal = { ...existingGoal, id: 'g-main', isMain: true }
+    const other: Goal = {
+      id: 'g-other',
+      title: 'Вторая',
+      deadline: 'июнь 2026',
+      percent: 5,
+      collected: 5000,
+      target: 100000,
+      monthly: 2000,
+      remaining: 95000,
+      isMain: false
+    }
+    const base = reducer(undefined, fetchGoals.fulfilled([main, other], 'r', undefined))
+    const next = reducer(base, deleteGoal.fulfilled('g-main', 'r', 'g-main'))
+    expect(next.items).toHaveLength(1)
+    expect(next.items[0].id).toBe('g-other')
+    expect(next.items[0].isMain).toBeFalsy()
   })
 
   it('очищает createError', () => {

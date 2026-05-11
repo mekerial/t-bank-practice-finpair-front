@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from 'react'
+import { forwardRef, type InputHTMLAttributes } from 'react'
 import './Input.css'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -6,12 +6,10 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
 }
 
-export default function Input({
-  id,
-  label,
-  className,
-  ...rest
-}: InputProps) {
+const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  { id, label, className, ...rest },
+  ref
+) {
   return (
     <div className="field">
       {label && (
@@ -20,10 +18,13 @@ export default function Input({
         </label>
       )}
       <input
+        ref={ref}
         id={id}
         className={['field__input', className ?? ''].filter(Boolean).join(' ')}
         {...rest}
       />
     </div>
   )
-}
+})
+
+export default Input
