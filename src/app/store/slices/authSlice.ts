@@ -4,7 +4,8 @@ import {
   loginRequest,
   registerRequest,
   refreshRequest,
-  logoutRequest
+  logoutRequest,
+  getMeRequest
 } from '../../../shared/api/authApi'
 import type { AuthUser } from '../../../shared/api/authApi'
 import { setAccessToken } from '../../../shared/api/apiClient'
@@ -57,13 +58,23 @@ export const tryRestoreSession = createAsyncThunk<
   try {
     const result = await refreshRequest()
     setAccessToken(result.accessToken)
-    const { getMeRequest } = await import('../../../shared/api/authApi')
     const user = await getMeRequest()
     return { user, accessToken: result.accessToken }
   } catch (e) {
     return rejectWithValue(getErrorMessage(e))
   }
 })
+
+export const fetchAuthUser = createAsyncThunk<AuthUser, void, { rejectValue: string }>(
+  'auth/fetchAuthUser',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await getMeRequest()
+    } catch (e) {
+      return rejectWithValue(getErrorMessage(e))
+    }
+  }
+)
 
 export const logoutUser = createAsyncThunk<void, void, { rejectValue: string }>(
   'auth/logoutUser',
@@ -118,6 +129,9 @@ const authSlice = createSlice({
       .addCase(logoutUser.rejected, (state) => {
         state.user = null
         state.accessToken = null
+      })
+      .addCase(fetchAuthUser.fulfilled, (state, action) => {
+        state.user = action.payload
       })
   }
 })

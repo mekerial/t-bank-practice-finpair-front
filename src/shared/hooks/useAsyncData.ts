@@ -9,9 +9,6 @@ export interface UseAsyncDataResult<T> {
   refetch: () => void
 }
 
-/**
- * Загружает данные при монтировании, при смене `cacheKey` и после refetch().
- */
 export function useAsyncData<T>(
   cacheKey: string | number,
   fetcher: () => Promise<T>
@@ -20,16 +17,28 @@ export function useAsyncData<T>(
   const [status, setStatus] = useState<AsyncStatus>('loading')
   const [error, setError] = useState<unknown>(undefined)
   const [retryCount, setRetryCount] = useState(0)
+  const cacheKeyRef = useRef(cacheKey)
 
   const fetcherRef = useRef(fetcher)
   fetcherRef.current = fetcher
 
   useEffect(() => {
     let cancelled = false
+    const keyChanged = cacheKeyRef.current !== cacheKey
+    if (keyChanged) {
+      cacheKeyRef.current = cacheKey
+    }
 
     const run = async () => {
-      setStatus('loading')
       setError(undefined)
+      if (keyChanged) {
+        setData(undefined)
+        setStatus('loading')
+      } else if (retryCount === 0) {
+        setStatus('loading')
+      } else {
+        setStatus((s) => (s === 'error' ? 'loading' : s))
+      }
 
       try {
         const result = await fetcherRef.current()

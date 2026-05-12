@@ -5,6 +5,8 @@ export interface AuthUser {
   email: string
   emailVerified: boolean
   hasPartner: boolean
+  /** Имя из профиля (GET /auth/me). */
+  name?: string
   displayName?: string
 }
 
@@ -62,4 +64,21 @@ export async function logoutRequest(): Promise<void> {
 export async function getMeRequest(): Promise<AuthUser> {
   const { data } = await apiClient.get<ApiResponse<AuthUser>>('/auth/me')
   return data.data
+}
+
+export async function changeEmailRequest(payload: {
+  email: string
+  password: string
+}): Promise<{ email: string; emailVerified: boolean }> {
+  const { data } = await apiClient.patch<
+    ApiResponse<{ email: string; emailVerified: boolean }>
+  >('/auth/email', payload)
+  return data.data
+}
+
+export async function changePasswordRequest(payload: {
+  currentPassword: string
+  newPassword: string
+}): Promise<void> {
+  await apiClient.patch('/auth/password', payload)
 }

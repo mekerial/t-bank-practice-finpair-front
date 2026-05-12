@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import axios from 'axios'
 import Card from '../../shared/ui/Card'
 import Button from '../../shared/ui/Button'
 import AsyncDataView from '../../shared/ui/AsyncDataView'
@@ -12,10 +13,8 @@ import {
 import {
   formatMoney,
   formatMoneyPlain,
-  PAYER_ALEXEY,
-  PAYER_MARIA,
-  type PartnerLabel
-} from '../../shared/lib/mocks'
+  type HouseholdCurrency
+} from '../../shared/lib/financeView'
 import {
   clearCreateTransactionError,
   createTransaction,
@@ -24,26 +23,52 @@ import {
   useAppSelector
 } from '../../app/store'
 import AddTransactionForm, {
+  type CategoryOption,
+  type PayerOption,
   type TransactionForm
 } from './components/AddTransactionForm'
 import SimpleSelect, {
   type SimpleSelectOption
 } from '../../shared/ui/SimpleSelect'
 import './transactions.css'
+import { useAsyncData } from '../../shared/hooks/useAsyncData'
+import { fetchCoupleRequest } from '../../shared/api/settingsApi'
+import type { CoupleDetails } from '../../shared/api/settingsApi'
+import { fetchCategoriesRequest } from '../../shared/api/transactionsApi'
+import { toRussianCategoryName } from '../../shared/lib/categoryLocalization'
+import { isValidHouseholdId } from '../../shared/lib/householdId'
 
 type TypeFilter = 'all' | 'income' | 'expense'
-type PayerFilter = 'all' | PartnerLabel
+type PayerFilter = 'all' | string
+const PAGE_SIZE = 8
+
+type PageEntry = number | 'gap'
+
+/** Номера страниц и пропуски «…», чтобы не рисовать десятки кнопок подряд */
+function visiblePageEntries(total: number, current: number): PageEntry[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1)
+  }
+  const edge = new Set<number>([1, total])
+  for (let i = current - 1; i <= current + 1; i++) {
+    if (i >= 1 && i <= total) edge.add(i)
+  }
+  const sorted = [...edge].sort((a, b) => a - b)
+  const out: PageEntry[] = []
+  for (let i = 0; i < sorted.length; i++) {
+    const n = sorted[i]
+    if (i > 0 && n - sorted[i - 1] > 1) {
+      out.push('gap')
+    }
+    out.push(n)
+  }
+  return out
+}
 
 const TYPE_FILTER_OPTIONS: SimpleSelectOption<TypeFilter>[] = [
   { value: 'all', label: 'Все' },
   { value: 'income', label: 'Доходы' },
   { value: 'expense', label: 'Расходы' }
-]
-
-const PAYER_FILTER_OPTIONS: SimpleSelectOption<PayerFilter>[] = [
-  { value: 'all', label: 'Все плательщики' },
-  { value: PAYER_ALEXEY, label: PAYER_ALEXEY },
-  { value: PAYER_MARIA, label: PAYER_MARIA }
 ]
 
 function CloseIcon({
@@ -87,12 +112,57 @@ export default function TransactionsPage() {
   const [payer, setPayer] = useState<PayerFilter>('all')
   const [page, setPage] = useState(1)
   const [isAddOpen, setIsAddOpen] = useState(false)
-
-  useEffect(() => {
-    if (status === 'idle') {
-      void dispatch(fetchTransactions())
+  const emptyCouple: CoupleDetails = {
+    id: '',
+    inviteCode: '',
+    currency: 'RUB',
+    splitType: 'equal',
+    notifications: {},
+    members: [],
+    users: []
+  }
+  const { data: coupleData } = useAsyncData(
+    'transactions-couple',
+    async () => {
+      try {
+        return await fetchCoupleRequest()
+      } catch (e) {
+        if (axios.isAxiosError(e) && e.response?.status === 404) return emptyCouple
+        throw e
+      }
     }
-  }, [dispatch, status])
+  )
+  const memberNameById = useMemo(() => {
+    const members = coupleData?.members ?? coupleData?.users ?? []
+    const map = new Map<string, string>()
+    members.forEach((m) => map.set(m.userId, m.name))
+    return map
+  }, [coupleData])
+  const payerOptions = useMemo<SimpleSelectOption<PayerFilter>[]>(() => {
+    const members = coupleData?.members ?? coupleData?.users ?? []
+    const dynamic = members.map((m) => ({ value: m.name as PayerFilter, label: m.name }))
+    return [{ value: 'all', label: 'Все плательщики' }, ...dynamic]
+  }, [coupleData])
+  const addPayerOptions = useMemo<PayerOption[]>(() => {
+    const members = coupleData?.members ?? coupleData?.users ?? []
+    return members.map((m) => ({ userId: m.userId, label: m.name }))
+  }, [coupleData])
+  const { data: categoriesData } = useAsyncData('tx-categories', async () => {
+    const [income, expense] = await Promise.all([
+      fetchCategoriesRequest({ type: 'income' }),
+      fetchCategoriesRequest({ type: 'expense' })
+    ])
+    return [...income, ...expense].map((category) => ({
+      ...category,
+      name: toRussianCategoryName(category.name)
+    })) as CategoryOption[]
+  })
+
+  const txHouseholdId = coupleData?.id
+  useEffect(() => {
+    if (!isValidHouseholdId(txHouseholdId)) return
+    void dispatch(fetchTransactions())
+  }, [dispatch, txHouseholdId])
 
   const filtered = useMemo(() => {
     return items.filter((t) => {
@@ -105,17 +175,68 @@ export default function TransactionsPage() {
 
       if (type === 'income' && t.amount < 0) return false
       if (type === 'expense' && t.amount > 0) return false
-      if (payer !== 'all' && t.payer !== payer) return false
+      const resolvedPayer = t.userId
+        ? (memberNameById.get(t.userId) ?? t.payer)
+        : t.payer
+      if (payer !== 'all' && resolvedPayer !== payer) return false
 
       return true
     })
-  }, [items, search, type, payer])
+  }, [items, search, type, payer, memberNameById])
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const pagedItems = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE
+    return filtered.slice(start, start + PAGE_SIZE)
+  }, [filtered, page])
 
-  const { income, expense, balance, balanceChangePercent, period } = summary
+  useEffect(() => {
+    setPage(1)
+  }, [search, type, payer])
 
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
+
+  const pageButtons = useMemo(
+    () => visiblePageEntries(totalPages, page),
+    [totalPages, page]
+  )
+
+  const historyListRef = useRef<HTMLDivElement>(null)
+
+  const {
+    income,
+    expense,
+    balance,
+    balanceChangePercent,
+    balanceChangeSkipReason,
+    period
+  } = summary
+  const currency: HouseholdCurrency = coupleData?.currency ?? 'RUB'
   const handleAddTransaction = async (data: TransactionForm) => {
     dispatch(clearCreateTransactionError())
-    const result = await dispatch(createTransaction(data))
+    const selectedCategory = (categoriesData ?? []).find(
+      (c) => c.id === data.categoryId
+    )
+    const householdIdRaw = coupleData?.id ?? ''
+    const householdId = isValidHouseholdId(householdIdRaw) ? householdIdRaw : ''
+    const payerUserId = data.payerUserId
+    if (!selectedCategory || !householdId || !payerUserId) {
+      return
+    }
+    const result = await dispatch(
+      createTransaction({
+        category: selectedCategory.name,
+        categoryId: selectedCategory.id,
+        householdId,
+        payerUserId,
+        amount: data.amount,
+        type: data.type,
+        date: data.date
+      })
+    )
     if (createTransaction.fulfilled.match(result)) {
       setPage(1)
       setIsAddOpen(false)
@@ -147,6 +268,8 @@ export default function TransactionsPage() {
 
       {isAddOpen && (
         <AddTransactionForm
+          payerOptions={addPayerOptions}
+          categoryOptions={categoriesData ?? []}
           onSubmit={handleAddTransaction}
           onCancel={() => setIsAddOpen(false)}
         />
@@ -180,7 +303,7 @@ export default function TransactionsPage() {
             className="filter-input__control"
             value={payer}
             onChange={setPayer}
-            options={PAYER_FILTER_OPTIONS}
+            options={payerOptions}
             aria-label="Плательщик"
           />
         </div>
@@ -190,7 +313,7 @@ export default function TransactionsPage() {
         <div className="summary-card">
           <div className="summary-card__label">Доходы</div>
           <div className="summary-card__value summary-card__value--income">
-            {formatMoney(income)}
+            {formatMoney(income, currency)}
           </div>
           <div className="summary-card__hint">за {period}</div>
         </div>
@@ -198,7 +321,7 @@ export default function TransactionsPage() {
         <div className="summary-card">
           <div className="summary-card__label">Расходы</div>
           <div className="summary-card__value summary-card__value--expense">
-            -{formatMoneyPlain(expense)}
+            -{formatMoneyPlain(expense, currency)}
           </div>
           <div className="summary-card__hint">за {period}</div>
         </div>
@@ -206,10 +329,16 @@ export default function TransactionsPage() {
         <div className="summary-card">
           <div className="summary-card__label">Баланс</div>
           <div className="summary-card__value">
-            {formatMoneyPlain(balance)}
+            {formatMoneyPlain(balance, currency)}
           </div>
           <div className="summary-card__hint summary-card__hint--accent">
-            +{balanceChangePercent}% к прошлому месяцу
+            {balanceChangePercent === null
+              ? balanceChangeSkipReason === 'not_comparable'
+                ? 'нет сопоставимого %: прошлый месяц слабее базы или сильный перекос'
+                : 'в прошлый месяц нет суммы для сравнения по чистому потоку'
+              : balanceChangePercent === 0
+                ? '0% к прошлому месяцу'
+                : `${balanceChangePercent > 0 ? '+' : ''}${balanceChangePercent}% к прошлому месяцу`}
           </div>
         </div>
       </div>
@@ -227,10 +356,13 @@ export default function TransactionsPage() {
         loadingLabel="Загружаем транзакции…"
       >
         <Card title="История операций">
-          <div className="tx-list">
-            {filtered.map((t) => {
+          <div className="tx-list" ref={historyListRef}>
+            {pagedItems.map((t) => {
               const isIncome = t.amount > 0
               const initials = t.category.slice(0, 2)
+              const payerName = t.userId
+                ? (memberNameById.get(t.userId) ?? t.payer)
+                : t.payer
 
               return (
                 <div key={t.id} className="tx-row">
@@ -239,7 +371,7 @@ export default function TransactionsPage() {
                   <div className="tx-row__main">
                     <div className="tx-row__top">
                       <span className="tx-row__category">{t.category}</span>
-                      <span className="chip chip--partner">{t.payer}</span>
+                      <span className="chip chip--partner">{payerName}</span>
                     </div>
                     <div className="tx-row__date">{t.date}</div>
                   </div>
@@ -250,50 +382,77 @@ export default function TransactionsPage() {
                       (isIncome ? 'tx-row__amount--income' : '')
                     }
                   >
-                    {formatMoney(t.amount)}
+                    {formatMoney(t.amount, currency)}
                   </div>
                 </div>
               )
             })}
 
-            {filtered.length === 0 && (
+            {pagedItems.length === 0 && (
               <div className="tx-list__empty">Ничего не найдено</div>
             )}
           </div>
 
-          <div className="pagination">
+          <nav className="pagination" aria-label="Страницы списка операций">
             <button
               type="button"
-              className="pagination__btn"
+              className="pagination__btn pagination__btn--edge"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              aria-label="Предыдущая страница"
             >
-              <IconChevronLeft width={14} height={14} />
-              Предыдущие
+              <IconChevronLeft width={14} height={14} aria-hidden />
+              <span className="pagination__btn-text">Предыдущие</span>
             </button>
 
-            {[1, 2, 3, 4].map((n) => (
-              <button
-                type="button"
-                key={n}
-                onClick={() => setPage(n)}
-                className={
-                  'pagination__page' +
-                  (page === n ? ' pagination__page--active' : '')
-                }
-              >
-                {n}
-              </button>
-            ))}
+            <div className="pagination__pages">
+              {totalPages > 1 ? (
+                pageButtons.map((entry, idx) =>
+                  entry === 'gap' ? (
+                    <span
+                      key={`gap-${idx}`}
+                      className="pagination__ellipsis"
+                      aria-hidden
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      key={entry}
+                      onClick={() => setPage(entry)}
+                      className={
+                        'pagination__page' +
+                        (page === entry ? ' pagination__page--active' : '')
+                      }
+                      aria-label={`Страница ${entry}`}
+                      aria-current={page === entry ? 'page' : undefined}
+                    >
+                      {entry}
+                    </button>
+                  )
+                )
+              ) : (
+                <span
+                  className="pagination__page pagination__page--active pagination__page--static"
+                  aria-current="page"
+                >
+                  1
+                </span>
+              )}
+            </div>
 
             <button
               type="button"
-              className="pagination__btn"
-              onClick={() => setPage((p) => Math.min(4, p + 1))}
+              className="pagination__btn pagination__btn--edge"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              aria-label="Следующая страница"
             >
-              Следующие
-              <IconChevronRight width={14} height={14} />
+              <span className="pagination__btn-text">Следующие</span>
+              <IconChevronRight width={14} height={14} aria-hidden />
             </button>
-          </div>
+          </nav>
         </Card>
       </AsyncDataView>
     </div>

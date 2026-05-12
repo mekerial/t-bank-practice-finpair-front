@@ -1,4 +1,4 @@
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { loginUser, useAppDispatch, useAppSelector } from '../../app/store'
@@ -13,9 +13,16 @@ interface LoginForm {
   password: string
 }
 
+interface LoginPageLocationState {
+  /** После регистрации подставляем email, без отдельного «успешно»-баннера */
+  email?: string
+}
+
 export default function LoginPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
+  const locationState = (location.state ?? {}) as LoginPageLocationState
   const user = useAppSelector((s) => s.auth.user)
   const [formError, setFormError] = useState('')
 
@@ -24,7 +31,10 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting }
   } = useForm<LoginForm>({
-    defaultValues: { email: '', password: '' },
+    defaultValues: {
+      email: locationState.email?.trim() ? locationState.email : '',
+      password: ''
+    },
     mode: 'onSubmit'
   })
 

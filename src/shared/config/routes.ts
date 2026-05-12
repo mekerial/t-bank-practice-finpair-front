@@ -1,11 +1,11 @@
 import type { ComponentType } from 'react'
 import {
   IconLoad,
+  IconHelp,
+  IconSettings,
   IconTransactions,
   IconAnalytics,
   IconGoals,
-  IconSettings,
-  IconHelp,
   type IconProps
 } from '../ui/icons'
 
@@ -13,6 +13,7 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   DASHBOARD: '/',
+  PROFILE: '/profile',
   TRANSACTIONS: '/transactions',
   ANALYTICS: '/analytics',
   GOALS: '/goals',

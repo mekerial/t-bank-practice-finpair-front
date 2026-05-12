@@ -33,9 +33,87 @@
   gap: 24px;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1023px) {
   .dashboard__grid {
     grid-template-columns: 1fr;
+  }
+
+  .expenses-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .expenses-table__head,
+  .expenses-table__row {
+    min-width: 520px;
+  }
+
+  .overview__row {
+    padding: 14px 0;
+  }
+
+  .overview__value {
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  .smart-balance__header {
+    margin-bottom: 14px;
+  }
+
+  .smart-balance__list {
+    gap: 8px;
+  }
+
+  .smart-balance__item {
+    gap: 10px;
+    padding: 10px 12px;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .smart-balance__index {
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+}
+
+@media (max-width: 479px) {
+  .dashboard {
+    gap: 16px;
+  }
+
+  .dashboard__title {
+    margin-bottom: 4px;
+  }
+
+  .smart-balance__header {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .smart-balance__bulb {
+    width: 32px;
+    height: 32px;
+  }
+
+  .smart-balance__list {
+    gap: 6px;
+  }
+
+  .smart-balance__item {
+    padding: 8px 10px;
+    gap: 8px;
+    font-size: 14px;
+    line-height: 1.42;
+  }
+
+  .smart-balance__index {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
   }
 }
 
@@ -48,6 +126,9 @@
 
 .donut {
   display: block;
+  width: min(200px, 100%);
+  max-width: 220px;
+  height: auto;
 }
 
 .dashboard__legend {
@@ -70,6 +151,13 @@
   height: 8px;
   border-radius: 50%;
   display: inline-block;
+}
+
+.overview__caption {
+  margin: -4px 0 4px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
 }
 
 .overview {
@@ -121,6 +209,16 @@
   border-color: var(--color-primary-22) !important;
 }
 
+/* Без сдвига: градиентная карточка и так выделяется */
+.card.smart-balance:hover {
+  transform: none;
+  box-shadow: 0 2px 18px rgba(26, 28, 35, 0.08);
+}
+
+html[data-theme='dark'] .card.smart-balance:hover {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
 .smart-balance__header {
   display: flex;
   gap: 12px;
@@ -154,19 +252,36 @@
 .smart-balance__list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .smart-balance__item {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 12px;
   background: var(--color-surface-alt);
   border: 1px solid var(--color-border);
-  border-radius: 999px;
-  padding: 14px 18px;
+  /* Не «капсула» на всю высоту при переносе текста — как обычные карточки */
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
   font: var(--font-body);
   color: var(--color-text);
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-smooth),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-smooth),
+    transform var(--motion-duration-fast) var(--motion-ease-smooth);
+}
+
+.smart-balance__item:hover {
+  border-color: var(--color-primary-22);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+.smart-balance__item > span:not(.smart-balance__index) {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
 }
 
 .smart-balance__index {
@@ -200,6 +315,15 @@
 
 .expenses-table__row:last-child {
   border-bottom: none;
+}
+
+.expenses-table__row {
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-smooth);
+  border-radius: var(--radius-sm);
+}
+
+.expenses-table__row:hover {
+  background: var(--color-primary-06);
 }
 
 .expenses-table__head {

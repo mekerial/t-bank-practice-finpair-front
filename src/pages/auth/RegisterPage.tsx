@@ -1,9 +1,10 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { registerUser, useAppDispatch, useAppSelector } from '../../app/store'
+import { useAppSelector } from '../../app/store'
 import { ROUTES } from '../../shared/config/routes'
 import { getErrorMessage } from '../../shared/lib/asyncUtils'
+import { registerRequest } from '../../shared/api/authApi'
 import Input from '../../shared/ui/Input'
 import Button from '../../shared/ui/Button'
 import './auth.css'
@@ -16,7 +17,6 @@ interface RegisterForm {
 }
 
 export default function RegisterPage() {
-  const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const user = useAppSelector((s) => s.auth.user)
   const [formError, setFormError] = useState('')
@@ -36,10 +36,15 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterForm) => {
     setFormError('')
     try {
-      await dispatch(
-        registerUser({ name: data.name, email: data.email, password: data.password })
-      ).unwrap()
-      navigate(ROUTES.DASHBOARD, { replace: true })
+      await registerRequest({
+        name: data.name,
+        email: data.email,
+        password: data.password
+      })
+      navigate(ROUTES.LOGIN, {
+        replace: true,
+        state: { email: data.email }
+      })
     } catch (e) {
       setFormError(typeof e === 'string' ? e : getErrorMessage(e))
     }
@@ -177,7 +182,7 @@ export default function RegisterPage() {
         )}
 
         <Button type="submit" fullWidth disabled={isSubmitting}>
-          {isSubmitting ? 'Создаём аккаунт…' : 'Создать аккаунт'}
+          {isSubmitting ? 'Создаём аккаунт…' : 'Зарегистрироваться'}
         </Button>
       </form>
 

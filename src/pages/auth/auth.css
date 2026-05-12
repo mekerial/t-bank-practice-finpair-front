@@ -86,13 +86,3 @@
   font: var(--font-body);
   color: var(--color-text-secondary);
 }
-
-.auth-form__info {
-  margin: -4px 0 0;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  background: rgba(30, 41, 59, 0.03);
-  font: var(--font-body);
-  color: var(--color-text-secondary);
-}

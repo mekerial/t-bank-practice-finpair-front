@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 import { API_BASE_URL } from '../config/env'
+import { ROUTES } from '../config/routes'
 
 let accessToken: string | null = null
 
@@ -87,6 +88,12 @@ apiClient.interceptors.response.use(
     } catch (refreshError) {
       setAccessToken(null)
       processRefreshQueue(null, refreshError)
+      if (
+        typeof window !== 'undefined' &&
+        window.location.pathname !== ROUTES.DASHBOARD
+      ) {
+        window.location.replace(ROUTES.DASHBOARD)
+      }
       return Promise.reject(refreshError)
     } finally {
       isRefreshing = false

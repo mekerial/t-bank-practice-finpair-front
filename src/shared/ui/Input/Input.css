@@ -24,8 +24,8 @@
   color: var(--color-text);
   outline: none;
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color var(--motion-duration-fast) var(--motion-ease-smooth),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-smooth);
 }
 
 .field__input::placeholder {
@@ -39,4 +39,14 @@
 .field__input:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.field__input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.field__input[type='number']::-webkit-outer-spin-button,
+.field__input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }

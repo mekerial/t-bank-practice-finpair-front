@@ -8,6 +8,16 @@
   background: var(--color-bg);
 }
 
+@media (max-width: 479px) {
+  .not-found {
+    padding: 48px 20px;
+  }
+
+  .not-found__code {
+    font-size: 40px;
+  }
+}
+
 .not-found__theme {
   position: absolute;
   top: 16px;

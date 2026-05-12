@@ -72,6 +72,15 @@ export function IconHelp(props: IconProps) {
   )
 }
 
+export function IconUser(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20a8 8 0 0 1 16 0" />
+    </svg>
+  )
+}
+
 export function IconSearch(props: IconProps) {
   return (
     <svg {...baseProps} {...props}>
@@ -152,6 +161,25 @@ export function IconMoon(props: IconProps) {
   return (
     <svg {...baseProps} {...props}>
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  )
+}
+
+export function IconMenu(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <line x1="4" y1="8" x2="20" y2="8" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="16" x2="20" y2="16" />
+    </svg>
+  )
+}
+
+export function IconClose(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   )
 }

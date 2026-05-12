@@ -13,13 +13,26 @@ function initials(name: string) {
     .toUpperCase()
 }
 
-export default function Sidebar() {
+function displayUserName(name?: string, displayName?: string, email?: string) {
+  const resolved = name?.trim() || displayName?.trim()
+  if (resolved) return resolved
+  if (!email) return 'Пользователь'
+  const local = email.split('@')[0] ?? email
+  return local
+}
+
+type SidebarProps = {
+  onNavigate?: () => void
+}
+
+export default function Sidebar({ onNavigate }: SidebarProps) {
   const dispatch = useAppDispatch()
   const user = useAppSelector((s) => s.auth.user)
 
-  const displayName = user?.displayName ?? user?.email ?? ''
+  const userName = displayUserName(user?.name, user?.displayName, user?.email)
 
   const handleLogout = () => {
+    onNavigate?.()
     dispatch(logoutUser())
       .unwrap()
       .catch(() => {})
@@ -27,7 +40,11 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className={'sidebar' + (user ? '' : ' sidebar--guest')}>
+    <aside
+      id="app-sidebar"
+      className={'sidebar' + (user ? '' : ' sidebar--guest')}
+      aria-label="Основная навигация"
+    >
       <div className="sidebar__top">
         <div className="sidebar__brand">{APP_NAME}</div>
         <div className="sidebar__subtitle">Финансы вдвоём</div>
@@ -41,6 +58,7 @@ export default function Sidebar() {
               key={item.path}
               to={item.path}
               end={item.path === '/'}
+              onClick={() => onNavigate?.()}
               className={({ isActive }) =>
                 'sidebar__link' + (isActive ? ' sidebar__link--active' : '')
               }
@@ -55,30 +73,45 @@ export default function Sidebar() {
       <div className="sidebar__user">
         {user ? (
           <>
-            <div className="sidebar__avatar">{initials(displayName)}</div>
-            <div className="sidebar__user-info">
-              <div className="sidebar__user-name">{displayName}</div>
-              <div className="sidebar__user-email">{user.email}</div>
-              <button
-                type="button"
-                className="sidebar__logout"
-                onClick={handleLogout}
-              >
-                Выйти
-              </button>
-            </div>
+            <NavLink
+              to={ROUTES.PROFILE}
+              className="sidebar__user-link"
+              onClick={() => onNavigate?.()}
+            >
+              <div className="sidebar__avatar">{initials(userName)}</div>
+              <div className="sidebar__user-info">
+                <div className="sidebar__user-name" title={userName}>
+                  {userName}
+                </div>
+                <div className="sidebar__user-email" title={user.email}>
+                  {user.email}
+                </div>
+              </div>
+            </NavLink>
+            <button
+              type="button"
+              className="sidebar__logout"
+              onClick={handleLogout}
+            >
+              Выйти
+            </button>
           </>
         ) : (
           <div className="sidebar__guest">
             <p className="sidebar__guest-hint">
               Войдите, чтобы увидеть суммы, графики и сохранять изменения.
             </p>
-            <NavLink to={ROUTES.LOGIN} className="sidebar__guest-btn">
+            <NavLink
+              to={ROUTES.LOGIN}
+              className="sidebar__guest-btn"
+              onClick={() => onNavigate?.()}
+            >
               Войти
             </NavLink>
             <NavLink
               to={ROUTES.REGISTER}
               className="sidebar__guest-btn sidebar__guest-btn--secondary"
+              onClick={() => onNavigate?.()}
             >
               Регистрация
             </NavLink>
