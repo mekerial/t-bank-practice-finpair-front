@@ -5,7 +5,6 @@ export interface AuthUser {
   email: string
   emailVerified: boolean
   hasPartner: boolean
-  /** Имя из профиля (GET /auth/me). */
   name?: string
   displayName?: string
 }

@@ -10,7 +10,6 @@ interface ApiResponse<T> {
 export interface UserProfile {
   id: string
   email: string
-  /** Отображаемое имя; может отсутствовать у старых ответов API. */
   name?: string
   income: number
 }

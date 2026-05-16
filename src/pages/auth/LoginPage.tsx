@@ -14,7 +14,6 @@ interface LoginForm {
 }
 
 interface LoginPageLocationState {
-  /** После регистрации подставляем email, без отдельного «успешно»-баннера */
   email?: string
 }
 

@@ -22,6 +22,8 @@ import { fetchAuthUser, useAppDispatch } from '../../app/store'
 import { isValidHouseholdId } from '../../shared/lib/householdId'
 import './profile.css'
 
+const SUCCESS_TOAST_MS = 6000
+
 interface NameFormValues {
   name: string
 }
@@ -118,17 +120,31 @@ export default function ProfilePage() {
     register: registerEmail,
     handleSubmit: handleSubmitEmail,
     reset: resetEmail,
+    clearErrors: clearEmailFieldErrors,
     formState: { isSubmitting: emailSubmitting, errors: emailFieldErrors }
   } = useForm<EmailFormValues>({
     defaultValues: { newEmail: '', password: '' },
-    mode: 'onBlur'
+    /** Только по кнопке «Сохранить почту», чтобы блок почты не валидировался при сохранении имени. */
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit'
   })
 
   useEffect(() => {
     if (!data?.user) return
     resetName({ name: data.user.name ?? '' })
-    resetEmail({ newEmail: '', password: '' })
-  }, [data?.user, resetName, resetEmail])
+  }, [data?.user, resetName])
+
+  useEffect(() => {
+    if (!nameMessage) return
+    const id = window.setTimeout(() => setNameMessage(''), SUCCESS_TOAST_MS)
+    return () => window.clearTimeout(id)
+  }, [nameMessage])
+
+  useEffect(() => {
+    if (!emailMessage) return
+    const id = window.setTimeout(() => setEmailMessage(''), SUCCESS_TOAST_MS)
+    return () => window.clearTimeout(id)
+  }, [emailMessage])
 
   const currentUser = data?.user
   const displayInitials = initialsFromUser(currentUser?.name, currentUser?.email)
@@ -151,6 +167,9 @@ export default function ProfilePage() {
   const onSaveName = handleSubmitName(async (values) => {
     setNameError('')
     setNameMessage('')
+    setEmailError('')
+    setEmailMessage('')
+    clearEmailFieldErrors()
     try {
       await updateUserProfileRequest({ name: values.name.trim() })
       setNameMessage('Имя сохранено.')
@@ -181,9 +200,12 @@ export default function ProfilePage() {
         password: values.password
       })
       setEmailMessage(
-        `Почта для входа обновлена: ${result.email}. Используйте этот адрес при следующем входе.`
+        `Почта для входа обновлена: ${result.email}. Пароль не меняется — входите с тем же паролем и новой почтой.`
       )
-      resetEmail({ newEmail: '', password: '' })
+      resetEmail({
+        newEmail: result.email.trim(),
+        password: values.password
+      })
       await refetch()
       void dispatch(fetchAuthUser())
     } catch (e) {
@@ -283,7 +305,9 @@ export default function ProfilePage() {
                   <p className="profile-page__display-name">
                     {(currentUser?.name ?? '').trim() || 'Без имени'}
                   </p>
-                  <p className="profile-page__display-mail">{currentUser?.email ?? '—'}</p>
+                  <p className="profile-page__display-mail" aria-live="polite">
+                    {currentUser?.email ?? '—'}
+                  </p>
                 </div>
               </div>
               <h4 className="profile-page__section-title">Как вас видит партнёр</h4>
@@ -299,7 +323,11 @@ export default function ProfilePage() {
                     {nameError}
                   </p>
                 ) : null}
-                {nameMessage ? <p className="profile-page__success">{nameMessage}</p> : null}
+                {nameMessage ? (
+                  <p className="profile-page__success" role="status" aria-live="polite">
+                    {nameMessage}
+                  </p>
+                ) : null}
                 <div className="profile-page__form-actions profile-page__form-actions--compact">
                   <Button type="submit" disabled={nameSubmitting}>
                     {nameSubmitting ? 'Сохранение…' : 'Сохранить имя'}
@@ -351,7 +379,11 @@ export default function ProfilePage() {
                     {emailError}
                   </p>
                 ) : null}
-                {emailMessage ? <p className="profile-page__success">{emailMessage}</p> : null}
+                {emailMessage ? (
+                  <p className="profile-page__success" role="status" aria-live="polite">
+                    {emailMessage}
+                  </p>
+                ) : null}
                 <div className="profile-page__form-actions profile-page__form-actions--compact">
                   <Button type="submit" variant="primary" disabled={emailSubmitting}>
                     {emailSubmitting ? 'Сохранение…' : 'Сохранить почту'}

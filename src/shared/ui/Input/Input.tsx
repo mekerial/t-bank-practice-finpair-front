@@ -4,14 +4,17 @@ import './Input.css'
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   id: string
   label?: string
+  readOnlyMuted?: boolean
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { id, label, className, ...rest },
+  { id, label, className, readOnly, disabled, readOnlyMuted = true, ...rest },
   ref
 ) {
+  const isLocked = Boolean(readOnly || disabled)
+  const showMutedReadOnly = isLocked && readOnlyMuted
   return (
-    <div className="field">
+    <div className={'field' + (showMutedReadOnly ? ' field--readonly' : '')}>
       {label && (
         <label htmlFor={id} className="field__label">
           {label}
@@ -20,7 +23,15 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       <input
         ref={ref}
         id={id}
-        className={['field__input', className ?? ''].filter(Boolean).join(' ')}
+        readOnly={readOnly}
+        disabled={disabled}
+        className={[
+          'field__input',
+          showMutedReadOnly ? 'field__input--readonly' : '',
+          className ?? ''
+        ]
+          .filter(Boolean)
+          .join(' ')}
         {...rest}
       />
     </div>

@@ -5,7 +5,6 @@ export interface ApiGoal {
   title: string
   targetAmount: number
   currentAmount: number
-  /** Остаток с сервера (decimal → JSON); предпочтительнее, чем target − current в JS. */
   remainingAmount?: number
   deadline?: string
   monthlyContribution?: number

@@ -21,6 +21,9 @@ import {
   updateSettingsRequest,
   updateUserIncomeRequest
 } from '../../shared/api/settingsApi'
+import { changeEmailRequest } from '../../shared/api/authApi'
+import { fetchAuthUser, useAppDispatch } from '../../app/store'
+import { getErrorMessage } from '../../shared/lib/asyncUtils'
 import { isValidHouseholdId } from '../../shared/lib/householdId'
 import './settings.css'
 
@@ -66,6 +69,8 @@ function Toggle({ checked, onChange }: ToggleProps) {
 }
 
 interface SettingsFormValues {
+  myEmail: string
+  emailPassword: string
   myIncome: string
   splitType: SplitType
   currency: 'RUB' | 'USD' | 'EUR'
@@ -87,6 +92,7 @@ function toBackendSplitType(value: SplitType): 'equal' | 'income' | 'custom' {
 }
 
 export default function SettingsPage() {
+  const dispatch = useAppDispatch()
   const [copied, setCopied] = useState(false)
   const [inviteCode, setInviteCode] = useState('FINPAIR-LOADING')
   const [submitError, setSubmitError] = useState('')
@@ -138,9 +144,12 @@ export default function SettingsPage() {
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting }
   } = useForm<SettingsFormValues>({
     defaultValues: {
+      myEmail: '',
+      emailPassword: '',
       myIncome: '0',
       splitType: 'by-income',
       currency: 'RUB',
@@ -172,6 +181,8 @@ export default function SettingsPage() {
     if (!data) return
     setInviteCode(data.couple.inviteCode)
     reset({
+      myEmail: data.user.email ?? currentMember?.email ?? '',
+      emailPassword: '',
       myIncome: String(data.user.income ?? 0),
       splitType: fromBackendSplitType(data.couple.splitType),
       currency: data.settings.currency,
@@ -182,6 +193,10 @@ export default function SettingsPage() {
       }
     })
   }, [data, currentMember?.email, partnerMember?.email, reset])
+
+  const watchedEmail = watch('myEmail') ?? ''
+  const savedEmail = (data?.user.email ?? '').trim().toLowerCase()
+  const emailChanged = watchedEmail.trim().toLowerCase() !== savedEmail
 
   const handleCopy = async () => {
     try {
@@ -202,7 +217,25 @@ export default function SettingsPage() {
       return
     }
 
+    const nextEmail = formData.myEmail.trim()
+    const emailWillChange =
+      nextEmail.toLowerCase() !== (data?.user.email ?? '').trim().toLowerCase()
+
+    if (emailWillChange) {
+      if (!formData.emailPassword.trim()) {
+        setSubmitError('Для смены почты введите текущий пароль')
+        return
+      }
+    }
+
     try {
+      if (emailWillChange) {
+        await changeEmailRequest({
+          email: nextEmail,
+          password: formData.emailPassword
+        })
+      }
+
       const notificationsPayload = {
         newTransactions: formData.notifications.newTransactions,
         goalsProgress: formData.notifications.goalsProgress,
@@ -226,9 +259,10 @@ export default function SettingsPage() {
           : [])
       ])
       await refetch()
+      void dispatch(fetchAuthUser())
       setSaveSuccess(true)
-    } catch {
-      setSubmitError('Не удалось сохранить настройки. Попробуйте снова.')
+    } catch (e) {
+      setSubmitError(getErrorMessage(e))
     }
   }
 
@@ -336,19 +370,57 @@ export default function SettingsPage() {
               </div>
 
               <div className="profile__fields">
-                <div>
-                  <Input
-                    id="a-email"
-                    label="Email"
-                    type="email"
-                    placeholder={currentMember?.email ?? data?.user.email ?? ''}
-                    value={currentMember?.email ?? data?.user.email ?? ''}
-                    onChange={() => {}}
-                    readOnly
+                <div className="profile__field-slot profile__field-slot--email">
+                  <Controller
+                    name="myEmail"
+                    control={control}
+                    rules={{
+                      required: 'Введите email',
+                      pattern: {
+                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                        message: 'Похоже на некорректный адрес'
+                      }
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        id="a-email"
+                        label="Email"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="your@email.com"
+                        {...field}
+                      />
+                    )}
                   />
+                  {errors.myEmail ? (
+                    <p className="settings__error">{errors.myEmail.message}</p>
+                  ) : null}
+                  {emailChanged ? (
+                    <div className="settings__email-password">
+                      <Controller
+                        name="emailPassword"
+                        control={control}
+                        rules={{
+                          required: 'Введите пароль для подтверждения смены почты'
+                        }}
+                        render={({ field }) => (
+                          <Input
+                            id="a-email-password"
+                            label="Текущий пароль"
+                            type="password"
+                            autoComplete="current-password"
+                            {...field}
+                          />
+                        )}
+                      />
+                      {errors.emailPassword ? (
+                        <p className="settings__error">{errors.emailPassword.message}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
 
-                <div>
+                <div className="profile__field-slot profile__field-slot--income">
                   <Controller
                     name="myIncome"
                     control={control}
@@ -370,7 +442,7 @@ export default function SettingsPage() {
                     render={({ field }) => (
                       <Input
                         id="a-income"
-                        label="Ваш месячный доход (для долей расходов)"
+                        label="Ваш месячный доход"
                         type="text"
                         inputMode="numeric"
                         autoComplete="off"
@@ -390,7 +462,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="profile">
+            <div className="profile profile--partner">
               <div className="profile__head">
                 <div className="profile__avatar profile__avatar--b">
                   {(partnerMember?.name ?? 'Партнёр')
@@ -408,7 +480,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="profile__fields">
-                <div>
+                <div className="profile__field-slot profile__field-slot--email">
                   <Input
                     id="b-email"
                     label="Email"
@@ -420,7 +492,7 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                <div>
+                <div className="profile__field-slot profile__field-slot--income">
                   <Input
                     id="b-income"
                     label="Месячный доход партнёра"

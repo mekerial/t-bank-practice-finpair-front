@@ -11,6 +11,7 @@ import {
 import { fetchTransactionsRequest } from './transactionsApi'
 import { fetchGoalsRequest } from './goalsApi'
 import { toRussianCategoryName } from '../lib/categoryLocalization'
+import { totalsForCalendarMonthFromApi } from '../lib/transactionMonthTotals'
 
 interface ApiResponse<T> {
   data: T
@@ -416,6 +417,7 @@ export async function fetchAnalyticsPageData(
 
   const isType = (type: unknown, expected: 'income' | 'expense') =>
     String(type ?? '').toLowerCase() === expected
+  const monthlyTx = totalsForCalendarMonthFromApi(tx, new Date())
   const income = tx
     .filter((t) => isType(t.type, 'income'))
     .reduce((s, t) => s + toAbsAmount(t.amount), 0)
@@ -462,8 +464,8 @@ export async function fetchAnalyticsPageData(
     {
       id: 'bal',
       label: 'Остаток',
-      value: formatMoneyPlain(Math.round(income - expense), currency),
-      hint: 'доходы - расходы'
+      value: formatMoneyPlain(Math.round(monthlyTx.balance), currency),
+      hint: 'по операциям за месяц'
     },
     {
       id: 'goals',
@@ -489,6 +491,16 @@ export async function fetchAnalyticsPageData(
           }
         })
       : fallbackKpi
+
+  const kpiWithMonthBalance = safeKpi.map((item) =>
+    item.id === 'bal'
+      ? {
+          ...item,
+          value: formatMoneyPlain(Math.round(monthlyTx.balance), currency),
+          hint: 'по операциям за месяц'
+        }
+      : item
+  )
 
   const txExpenseByCategory = tx
     .filter((t) => isType(t.type, 'expense'))
@@ -630,7 +642,7 @@ export async function fetchAnalyticsPageData(
     .slice(0, 4)
 
   return {
-    kpi: safeKpi,
+    kpi: kpiWithMonthBalance,
     categories: safeCategories,
     partnerCompare: safePartnerCompare,
     insights: safeInsights
