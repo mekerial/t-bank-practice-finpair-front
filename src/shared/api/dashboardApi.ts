@@ -39,7 +39,6 @@ export interface DashboardMainExpense {
 
 export interface DashboardPageData {
   financialLoad: FinancialLoad
-  /** Подзаголовок для блока «Ежемесячный обзор» — за какой месяц посчитаны цифры. */
   overviewMonthLabel: string
   recommendations: Recommendation[]
   mainExpenses: DashboardMainExpense[]
@@ -143,7 +142,6 @@ export async function fetchDashboard(): Promise<DashboardPageData> {
   const now = new Date()
   const overviewMonthLabel = calendarMonthTitleRu(now)
   const monthlyFromTx = totalsForCalendarMonthFromApi(transactions, now)
-  const hasTxData = transactions.length > 0
 
   const topExpenses = Array.from(categoryRows.entries())
     .map(([category, value], index) => {
@@ -169,12 +167,10 @@ export async function fetchDashboard(): Promise<DashboardPageData> {
     .slice(0, 5)
 
   const financialLoad: FinancialLoad = {
-    totalIncome: hasTxData ? monthlyFromTx.income : (d.totalIncome ?? 0),
-    totalExpense: hasTxData ? monthlyFromTx.expense : (d.totalExpense ?? 0),
-    balance: hasTxData ? monthlyFromTx.balance : (d.balance ?? 0),
-    loadPercent: hasTxData
-      ? toLoadPercent(monthlyFromTx.financialLoadPercent)
-      : toLoadPercent(d.financialLoadPercent ?? 0),
+    totalIncome: monthlyFromTx.income,
+    totalExpense: monthlyFromTx.expense,
+    balance: monthlyFromTx.balance,
+    loadPercent: toLoadPercent(monthlyFromTx.financialLoadPercent),
     partnerSplit: {
       a: partners[0]
         ? (normalizedShareByUserId.get(partners[0].userId) ?? 0)
@@ -185,9 +181,7 @@ export async function fetchDashboard(): Promise<DashboardPageData> {
     }
   }
 
-  const loadPercent = hasTxData
-    ? monthlyFromTx.financialLoadPercent
-    : (d.financialLoadPercent ?? 0)
+  const loadPercent = monthlyFromTx.financialLoadPercent
   const recommendations: Recommendation[] = [
     {
       id: 1,
@@ -199,7 +193,7 @@ export async function fetchDashboard(): Promise<DashboardPageData> {
     {
       id: 2,
       text:
-        (d.balance ?? 0) <= 0
+        monthlyFromTx.balance <= 0
           ? 'Баланс на нуле или в минусе: добавьте доходные операции и пересмотрите регулярные списания.'
           : 'Часть положительного баланса направляйте в цели, чтобы ускорить накопления.'
     },

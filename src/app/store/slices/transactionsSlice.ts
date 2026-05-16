@@ -21,7 +21,7 @@ export interface Transaction {
   amount: number
 }
 
-export type BalanceChangeSkipReason = 'no_previous_flow' | 'not_comparable'
+export type BalanceChangeSkipReason = 'no_previous_flow'
 
 export interface TransactionsSummary {
   income: number
@@ -34,6 +34,10 @@ export interface TransactionsSummary {
   balanceChangePercent: number | null
   /** Заполняется только когда `balanceChangePercent === null` и нужно пояснить почему. */
   balanceChangeSkipReason?: BalanceChangeSkipReason
+  /** Текущий чистый поток минус прошлый (доходы − расходы по месяцам), для подписи в ₽. */
+  balanceChangeFlowDelta: number
+  /** Процент в интерфейсе обрезан до ±400 от сырого расчёта. */
+  balanceChangePercentCapped: boolean
   period: string
 }
 
@@ -62,6 +66,8 @@ const defaultSummary: TransactionsSummary = {
   expense: 0,
   balance: 0,
   balanceChangePercent: null,
+  balanceChangeFlowDelta: 0,
+  balanceChangePercentCapped: false,
   period: ''
 }
 
@@ -140,43 +146,42 @@ export function calcSummary(
 
   const prevNet = previous.balance
   const curNet = current.balance
-  /**
-   * Процент (cur−prev)/|prev| при маленьком «prev» даёт +1000% и т.п. — бессмысленно в UI.
-   * Нужна достаточная база прошлого месяца и разумный потолок |%|.
-   */
-  const MIN_ABS_BASE = 5_000
-  const MIN_BASE_VS_CUR = 0.12
-  const MAX_PERCENT_MAGNITUDE = 120
+  const flowDelta = curNet - prevNet
+  const prevGross = previous.income + previous.expense
+  const PREV_MONTH_ACTIVITY_RUB = 4_000
+  const DENOM_FROM_TURNOVER = 0.06
+  const MIN_DENOM = 1_500
+  const MAX_PERCENT_DISPLAY = 400
+
+  const hadPrevMonthActivity =
+    prevGross >= PREV_MONTH_ACTIVITY_RUB || Math.abs(prevNet) >= PREV_MONTH_ACTIVITY_RUB
 
   let balanceChangePercent: number | null
   let balanceChangeSkipReason: BalanceChangeSkipReason | undefined
+  let balanceChangePercentCapped = false
 
-  if (prevNet === 0) {
-    if (curNet === 0) {
+  if (!hadPrevMonthActivity) {
+    if (prevNet === 0 && curNet === 0) {
       balanceChangePercent = 0
     } else {
       balanceChangePercent = null
       balanceChangeSkipReason = 'no_previous_flow'
     }
   } else {
-    const prevAbs = Math.abs(prevNet)
-    const curAbs = Math.abs(curNet)
-    const floorVsCurrent = curAbs > 0 ? MIN_BASE_VS_CUR * curAbs : MIN_ABS_BASE
-    const minMeaningfulBase = Math.max(MIN_ABS_BASE, floorVsCurrent)
-
-    if (prevAbs < minMeaningfulBase) {
-      balanceChangePercent = null
-      balanceChangeSkipReason = 'not_comparable'
-    } else {
-      const rawPct = ((curNet - prevNet) / prevAbs) * 100
-      const rounded = Math.round(rawPct)
-      if (Math.abs(rounded) > MAX_PERCENT_MAGNITUDE) {
-        balanceChangePercent = null
-        balanceChangeSkipReason = 'not_comparable'
-      } else {
-        balanceChangePercent = rounded
-      }
-    }
+    const denom = Math.max(
+      Math.abs(prevNet),
+      prevGross * DENOM_FROM_TURNOVER,
+      MIN_DENOM
+    )
+    const rawPct = ((curNet - prevNet) / denom) * 100
+    const rounded = Math.round(rawPct)
+    const clamped = Math.max(
+      -MAX_PERCENT_DISPLAY,
+      Math.min(MAX_PERCENT_DISPLAY, rounded)
+    )
+    balanceChangePercentCapped = clamped !== rounded
+    balanceChangePercent = clamped
+    balanceChangeSkipReason = undefined
   }
 
   return {
@@ -185,6 +190,8 @@ export function calcSummary(
     balance: current.balance,
     balanceChangePercent,
     balanceChangeSkipReason,
+    balanceChangeFlowDelta: flowDelta,
+    balanceChangePercentCapped,
     period: referenceDate.toLocaleString('ru-RU', { month: 'long' })
   }
 }

@@ -211,7 +211,8 @@ export default function TransactionsPage() {
     expense,
     balance,
     balanceChangePercent,
-    balanceChangeSkipReason,
+    balanceChangeFlowDelta,
+    balanceChangePercentCapped,
     period
   } = summary
   const currency: HouseholdCurrency = coupleData?.currency ?? 'RUB'
@@ -332,13 +333,32 @@ export default function TransactionsPage() {
             {formatMoneyPlain(balance, currency)}
           </div>
           <div className="summary-card__hint summary-card__hint--accent">
-            {balanceChangePercent === null
-              ? balanceChangeSkipReason === 'not_comparable'
-                ? 'нет сопоставимого %: прошлый месяц слабее базы или сильный перекос'
-                : 'в прошлый месяц нет суммы для сравнения по чистому потоку'
-              : balanceChangePercent === 0
-                ? '0% к прошлому месяцу'
-                : `${balanceChangePercent > 0 ? '+' : ''}${balanceChangePercent}% к прошлому месяцу`}
+            {balanceChangePercent === null ? (
+              <span>
+                в прошлый месяц мало операций — не с чем сравнить чистый поток
+              </span>
+            ) : (
+              <div className="summary-card__hint-stack">
+                <span>
+                  {balanceChangePercentCapped
+                    ? balanceChangePercent > 0
+                      ? 'Существенно выше прошлого месяца'
+                      : 'Существенно ниже прошлого месяца'
+                    : balanceChangePercent === 0
+                      ? 'Без изменений к прошлому месяцу'
+                      : balanceChangePercent > 0
+                        ? `На ${balanceChangePercent}% выше прошлого месяца`
+                        : `На ${Math.abs(balanceChangePercent)}% ниже прошлого месяца`}
+                </span>
+                {balanceChangePercent !== 0 ? (
+                  <span className="summary-card__hint-delta">
+                    Разница с прошлым месяцем:{' '}
+                    {balanceChangeFlowDelta >= 0 ? '+' : '−'}
+                    {formatMoneyPlain(Math.abs(balanceChangeFlowDelta), currency)}
+                  </span>
+                ) : null}
+              </div>
+            )}
           </div>
         </div>
       </div>

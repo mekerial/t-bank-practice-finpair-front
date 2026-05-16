@@ -1,7 +1,5 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-
-/** Шлюз FinPair.ApiGateway — тот же адрес, что и в dev (`npm run dev`). */
 const apiGatewayTarget = 'http://127.0.0.1:5194'
 
 const apiProxy = {

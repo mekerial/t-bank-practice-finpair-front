@@ -109,7 +109,7 @@ function DashboardContent({
 
         <Card title="Ежемесячный обзор">
           <p className="overview__caption">
-            За {overviewMonthLabel} — доходы и расходы только из операций этого календарного месяца.
+            За {overviewMonthLabel} — только операции этого календарного месяца.
           </p>
           <div className="overview">
             <div className="overview__row">

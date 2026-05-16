@@ -50,3 +50,37 @@
   -webkit-appearance: none;
   margin: 0;
 }
+
+.field--readonly .field__label {
+  color: var(--color-text);
+}
+
+.field__input--readonly,
+.field__input:read-only,
+.field__input:disabled {
+  background: var(--color-surface-hover);
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  cursor: default;
+  -webkit-text-fill-color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.field__input--readonly::placeholder,
+.field__input:read-only::placeholder,
+.field__input:disabled::placeholder {
+  color: var(--color-text-muted);
+}
+
+.field__input--readonly:hover,
+.field__input:read-only:hover,
+.field__input:disabled:hover {
+  border-color: var(--color-border);
+}
+
+.field__input--readonly:focus,
+.field__input:read-only:focus,
+.field__input:disabled:focus {
+  border-color: var(--color-border);
+  box-shadow: none;
+}

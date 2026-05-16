@@ -49,7 +49,6 @@ export interface NotificationSettings {
   monthlyReports: boolean
 }
 
-/** Валюта домохозяйства (как в настройках API). */
 export type HouseholdCurrency = 'RUB' | 'USD' | 'EUR'
 
 export function currencySymbol(currency: HouseholdCurrency): string {

@@ -22,6 +22,5 @@ export function writeStoredFocusedGoalId(
     if (goalId === null || goalId === '') localStorage.removeItem(k)
     else localStorage.setItem(k, goalId)
   } catch {
-    /* storage disabled or quota */
   }
 }

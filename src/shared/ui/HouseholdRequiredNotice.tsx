@@ -10,7 +10,6 @@ import './HouseholdRequiredNotice.css'
 interface HouseholdRequiredNoticeProps {
   title?: string
   description?: string
-  /** После успешного создания пары — обновить данные страницы без reload */
   onCoupleCreated?: () => void | Promise<void>
 }
 
@@ -25,8 +24,6 @@ export function isHouseholdMissingError(error: unknown): boolean {
       requestUrl.includes('/goals') ||
       requestUrl.includes('/analytics')
 
-    // Для экранов пары/аналитики/транзакций 404 обычно означает:
-    // household/couple для пользователя ещё не создан.
     if (status === 404 && isDomainEndpoint) {
       return true
     }

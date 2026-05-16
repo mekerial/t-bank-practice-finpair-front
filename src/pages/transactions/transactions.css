@@ -133,6 +133,20 @@
   color: var(--color-primary);
 }
 
+.summary-card__hint-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.summary-card__hint-delta {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--color-text-secondary);
+}
+
 .tx-list {
   display: flex;
   flex-direction: column;
@@ -328,7 +342,6 @@
   margin: 0;
 }
 
-/* Единый размер для всех контролов */
 .transactions-form input,
 .transactions-form select,
 .transactions-form .input,

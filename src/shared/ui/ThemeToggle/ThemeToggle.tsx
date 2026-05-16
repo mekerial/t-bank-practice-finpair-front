@@ -6,7 +6,6 @@ export type ThemeToggleMode = 'header' | 'floating'
 
 interface ThemeToggleProps {
   className?: string
-  /** `header` — правый верх блока с приветствием; `floating` — угол экрана (вход, 404). */
   mode?: ThemeToggleMode
 }
 
