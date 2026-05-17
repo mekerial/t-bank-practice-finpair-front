@@ -32,6 +32,10 @@ export interface SupportContacts {
   telegram: string
 }
 
+export interface SupportChatResponse {
+  outputText: string
+}
+
 const FAQ_TRANSLATIONS: Record<string, { question: string; answer: string }> = {
   'how to connect partner': {
     question: 'Как подключить партнёра?',
@@ -228,9 +232,12 @@ export async function fetchSupportContactsRequest(): Promise<SupportContacts> {
   return data.data
 }
 
-export async function sendSupportMessageRequest(payload: {
-  subject?: string
+export async function sendSupportChatMessageRequest(payload: {
   message: string
-}): Promise<void> {
-  await apiClient.post('/support/message', payload)
+}): Promise<SupportChatResponse> {
+  const { data } = await apiClient.post<ApiResponse<SupportChatResponse>>(
+    '/support/chat',
+    payload
+  )
+  return data.data
 }
