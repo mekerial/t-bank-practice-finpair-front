@@ -86,3 +86,30 @@
   font: var(--font-body);
   color: var(--color-text-secondary);
 }
+
+@media (max-width: 767px) {
+  .auth-form {
+    gap: 20px;
+  }
+
+  .auth-form__title {
+    font-size: 17px;
+    line-height: 22px;
+  }
+
+  .auth-form__form {
+    gap: 14px;
+  }
+
+  .auth-form__form .btn {
+    min-height: 44px;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .auth-form input,
+  .auth-form .field__input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}

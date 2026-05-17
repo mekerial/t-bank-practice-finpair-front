@@ -24,10 +24,32 @@
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
-@media (max-width: 1023px) {
+.support__grid > .card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.support__grid > .card .card__header {
+  flex-shrink: 0;
+}
+
+.support__grid > .card .card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.support__grid > .card:last-child .support__chat-form {
+  margin-top: auto;
+}
+
+@media (max-width: 767px) {
   .support__grid {
     grid-template-columns: 1fr;
   }
@@ -183,7 +205,7 @@
   gap: 16px;
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 767px) {
   .contacts {
     grid-template-columns: 1fr;
   }
@@ -215,14 +237,256 @@
   text-decoration: underline;
 }
 
+.support__send-success {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-success) 28%, transparent);
+  text-align: center;
+}
+
+@media (max-width: 767px) {
+  .support__title {
+    font-size: 20px;
+    line-height: 26px;
+  }
+
+  .support__grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .faq__button {
+    min-height: 44px;
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .faq__button > span:first-child {
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  .chat-textarea {
+    min-height: 88px;
+    font-size: 16px;
+  }
+
+  .chat-msg__text {
+    overflow-wrap: anywhere;
+  }
+}
+
 @media (max-width: 479px) {
   .support__greeting {
     font-size: 16px;
     line-height: 24px;
   }
+}
 
-  .faq__button {
-    padding: 12px 14px;
+/* Планшет: FAQ и чат в одну линию, одинаковая высота карточек */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .support {
+    gap: 16px;
+  }
+
+  .support__title {
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  .support__grid {
+    grid-template-columns: 1.35fr 1fr;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .contacts {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+}
+
+/* Мобильный и планшет ≤1023 — после tablet-блока */
+@media (max-width: 1023px) {
+  .support {
+    gap: 14px;
+    min-width: 0;
+  }
+
+  .support__title {
+    font-size: 22px;
+    line-height: 28px;
+  }
+
+  .support__greeting {
+    font-size: 17px;
+    line-height: 22px;
+    margin-bottom: 6px;
+  }
+
+  .support__text {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .support__grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .support__grid > .card {
+    height: auto;
+    min-height: 0;
+  }
+
+  .support__grid > .card .card__body {
+    min-width: 0;
+  }
+
+  .support__grid > .card:last-child .support__chat-form {
+    margin-top: 12px;
+  }
+
+  .chat-head {
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .chat-head > div:last-child {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .chat-head__title {
+    font-size: 16px;
+    line-height: 21px;
+  }
+
+  .chat-head__hint {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .chat-msg {
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .chat-msg > div:last-child {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .chat-msg__name {
+    font-size: 14px;
+  }
+
+  .chat-msg__text {
+    font-size: 14px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .support__chat-form {
+    width: 100%;
+  }
+
+  .chat-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 96px;
+    font-size: 16px;
+  }
+
+  .faq-list {
+    gap: 8px;
+  }
+
+  .faq__answer {
+    padding: 0 14px 14px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .support__contacts-card .card__body {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* Контакты: на всю ширину карточки, по центру (не 3 колонки вбок) */
+  .support__contacts-card .contacts {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    grid-template-columns: unset;
+  }
+
+  .support__contacts-card .contacts__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    padding: 16px;
+    box-sizing: border-box;
+    text-align: center;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .support__contacts-card .contacts__label {
+    width: 100%;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--color-text-secondary);
+    text-align: center;
+  }
+
+  .support__contacts-card .contacts__value,
+  .support__contacts-card .contacts__link {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: center;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .support__contacts-card .contacts__link {
+    color: var(--color-primary);
+  }
+}
+
+@media (max-width: 479px) {
+  .support__title {
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  .support__contacts-card .contacts__item {
+    padding: 14px;
   }
 }

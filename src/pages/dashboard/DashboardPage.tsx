@@ -16,6 +16,7 @@ import { fetchCoupleRequest } from '../../shared/api/settingsApi'
 import type { CoupleDetails } from '../../shared/api/settingsApi'
 import { calendarMonthTitleRu } from '../../shared/lib/transactionMonthTotals'
 import './dashboard.css'
+import '../../app/styles/mobile-pages.css'
 
 interface DonutChartProps {
   a: number

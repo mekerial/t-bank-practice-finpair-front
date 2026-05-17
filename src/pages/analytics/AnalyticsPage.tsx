@@ -12,15 +12,25 @@ import {
   type AnalyticsPageData
 } from '../../shared/api/analyticsApi'
 import { useAsyncData } from '../../shared/hooks/useAsyncData'
+import { useCompactCharts } from '../../shared/hooks/useCompactCharts'
 import AsyncDataView from '../../shared/ui/AsyncDataView'
 import { fetchCoupleRequest } from '../../shared/api/settingsApi'
 import type { CoupleDetails } from '../../shared/api/settingsApi'
 import './analytics.css'
+import '../../app/styles/mobile-pages.css'
 
 function chartYMax(values: number[]): number {
   const finite = values.filter((v) => Number.isFinite(v))
   const raw = finite.length > 0 ? Math.max(...finite, 0) : 0
   return Number.isFinite(raw) ? raw : 0
+}
+
+type ChartPadding = { top: number; right: number; bottom: number; left: number }
+
+function chartPadding(compact: boolean): ChartPadding {
+  return compact
+    ? { top: 36, right: 20, bottom: 40, left: 20 }
+    : { top: 20, right: 16, bottom: 30, left: 50 }
 }
 
 function formatMonthTick(monthKey: string): string {
@@ -49,11 +59,13 @@ function formatMonthTick(monthKey: string): string {
 function DoubleLineChart({
   data,
   partnerALabel,
-  partnerBLabel
+  partnerBLabel,
+  compact = false
 }: {
   data: PartnerComparePoint[]
   partnerALabel: string
   partnerBLabel: string
+  compact?: boolean
 }) {
   if (data.length === 0) {
     return <p>Нет данных для графика</p>
@@ -61,7 +73,7 @@ function DoubleLineChart({
 
   const width = 800
   const height = 260
-  const padding = { top: 20, right: 16, bottom: 30, left: 50 }
+  const padding = chartPadding(compact)
   const max = chartYMax(data.flatMap((d) => [d.a, d.b]))
   const min = 0
   const denominator = Math.max(max - min, 1)
@@ -92,8 +104,19 @@ function DoubleLineChart({
   const gridLevels = [0, 0.25, 0.5, 0.75, 1]
 
   return (
-    <div>
+    <div className="chart-block">
       <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="260" className="chart">
+        {compact && max > 0 ? (
+          <text
+            x={width / 2}
+            y={18}
+            fontSize="11"
+            textAnchor="middle"
+            fill="var(--color-chart-tick)"
+          >
+            {formatYValue(0)} — {formatYValue(max)}
+          </text>
+        ) : null}
         <line
           x1={padding.left}
           y1={padding.top}
@@ -102,7 +125,7 @@ function DoubleLineChart({
           stroke="var(--color-chart-axis)"
           strokeWidth="1.5"
         />
-        
+
         <line
           x1={padding.left}
           y1={height - padding.bottom}
@@ -125,15 +148,17 @@ function DoubleLineChart({
                 stroke="var(--color-chart-grid)"
                 strokeWidth="1"
               />
-              <text
-                x={padding.left - 8}
-                y={y + 4}
-                fontSize="11"
-                textAnchor="end"
-                fill="var(--color-chart-tick)"
-              >
-                {formatYValue(valueAtLine)}
-              </text>
+              {!compact ? (
+                <text
+                  x={padding.left - 8}
+                  y={y + 4}
+                  fontSize="11"
+                  textAnchor="end"
+                  fill="var(--color-chart-tick)"
+                >
+                  {formatYValue(valueAtLine)}
+                </text>
+              ) : null}
             </g>
           )
         })}
@@ -222,7 +247,13 @@ function PieChart({ data }: { data: CategorySlice[] }) {
   )
 }
 
-function BarChart({ data }: { data: PartnerComparePoint[] }) {
+function BarChart({
+  data,
+  compact = false
+}: {
+  data: PartnerComparePoint[]
+  compact?: boolean
+}) {
   if (data.length === 0) {
     return <p>Нет данных для сравнения</p>
   }
@@ -232,7 +263,7 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
 
   const width = 500
   const height = 260
-  const padding = { top: 20, right: 16, bottom: 30, left: 50 }
+  const padding = chartPadding(compact)
   const max = chartYMax(source.flatMap((d) => [d.a, d.b]))
   const min = 0
   const plotW = width - padding.left - padding.right
@@ -249,55 +280,69 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
   const gridLevels = [0, 0.25, 0.5, 0.75, 1]
 
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      width="100%"
-      height="260"
-      className="chart"
-    >
-      <line
-        x1={padding.left}
-        y1={padding.top}
-        x2={padding.left}
-        y2={height - padding.bottom}
-        stroke="var(--color-chart-axis)"
-        strokeWidth="1.5"
-      />
-      
-      <line
-        x1={padding.left}
-        y1={height - padding.bottom}
-        x2={width - padding.right}
-        y2={height - padding.bottom}
-        stroke="var(--color-chart-axis)"
-        strokeWidth="1.5"
-      />
+    <div className="chart-block">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width="100%"
+        height="260"
+        className="chart"
+      >
+        {compact && max > 0 ? (
+          <text
+            x={width / 2}
+            y={18}
+            fontSize="11"
+            textAnchor="middle"
+            fill="var(--color-chart-tick)"
+          >
+            {formatYValue(0)} — {formatYValue(max)}
+          </text>
+        ) : null}
+        <line
+          x1={padding.left}
+          y1={padding.top}
+          x2={padding.left}
+          y2={height - padding.bottom}
+          stroke="var(--color-chart-axis)"
+          strokeWidth="1.5"
+        />
 
-      {gridLevels.map((t, i) => {
-        const y = padding.top + plotH * (1 - t)
-        const valueAtLine = min + (max - min) * t
-        return (
-          <g key={i}>
-            <line
-              x1={padding.left}
-              x2={width - padding.right}
-              y1={y}
-              y2={y}
-              stroke="var(--color-chart-grid)"
-              strokeWidth="1"
-            />
-            <text
-              x={padding.left - 8}
-              y={y + 4}
-              fontSize="11"
-              textAnchor="end"
-              fill="var(--color-chart-tick)"
-            >
-              {formatYValue(valueAtLine)}
-            </text>
-          </g>
-        )
-      })}
+        <line
+          x1={padding.left}
+          y1={height - padding.bottom}
+          x2={width - padding.right}
+          y2={height - padding.bottom}
+          stroke="var(--color-chart-axis)"
+          strokeWidth="1.5"
+        />
+
+        {gridLevels.map((t, i) => {
+          const y = padding.top + plotH * (1 - t)
+          const valueAtLine = min + (max - min) * t
+          return (
+            <g key={i}>
+              <line
+                x1={padding.left}
+                x2={width - padding.right}
+                y1={y}
+                y2={y}
+                stroke="var(--color-chart-grid)"
+                strokeWidth="1"
+              />
+              {!compact ? (
+                <text
+                  x={padding.left - 8}
+                  y={y + 4}
+                  fontSize="11"
+                  textAnchor="end"
+                  fill="var(--color-chart-tick)"
+                >
+                  {formatYValue(valueAtLine)}
+                </text>
+              ) : null}
+            </g>
+          )
+        })}
 
       {source.map((d, i) => {
         const baseX = padding.left + i * groupW + groupW / 2 - barW
@@ -340,7 +385,8 @@ function BarChart({ data }: { data: PartnerComparePoint[] }) {
           </text>
         )
       })}
-    </svg>
+      </svg>
+    </div>
   )
 }
 
@@ -356,6 +402,7 @@ function AnalyticsPageContent({
   currency: HouseholdCurrency
 }) {
   const { kpi, categories, partnerCompare, insights } = data
+  const compactCharts = useCompactCharts()
 
   return (
     <>
@@ -374,6 +421,7 @@ function AnalyticsPageContent({
           data={partnerCompare}
           partnerALabel={partnerALabel}
           partnerBLabel={partnerBLabel}
+          compact={compactCharts}
         />
       </Card>
 
@@ -399,7 +447,7 @@ function AnalyticsPageContent({
         </Card>
 
         <Card title="Сравнение трат партнёров">
-          <BarChart data={partnerCompare} />
+          <BarChart data={partnerCompare} compact={compactCharts} />
           <div className="bar-legend">
             <span>
               <span

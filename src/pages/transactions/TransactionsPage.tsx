@@ -31,6 +31,7 @@ import SimpleSelect, {
   type SimpleSelectOption
 } from '../../shared/ui/SimpleSelect'
 import './transactions.css'
+import '../../app/styles/mobile-pages.css'
 import { useAsyncData } from '../../shared/hooks/useAsyncData'
 import { fetchCoupleRequest } from '../../shared/api/settingsApi'
 import type { CoupleDetails } from '../../shared/api/settingsApi'
@@ -259,7 +260,7 @@ export default function TransactionsPage() {
         >
           {isAddOpen ? <CloseIcon /> : <IconPlus />}
 
-          <span style={{ marginLeft: 6 }}>
+          <span className="transactions__add-label">
             {isAddOpen ? 'Скрыть форму' : 'Добавить'}
           </span>
         </Button>

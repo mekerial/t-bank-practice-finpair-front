@@ -32,90 +32,6 @@
   gap: 24px;
 }
 
-@media (max-width: 1023px) {
-  .dashboard__grid {
-    grid-template-columns: 1fr;
-  }
-
-  .expenses-table {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .expenses-table__head,
-  .expenses-table__row {
-    min-width: 520px;
-  }
-
-  .overview__row {
-    padding: 14px 0;
-  }
-
-  .overview__value {
-    font-size: 18px;
-    line-height: 24px;
-  }
-
-  .smart-balance__header {
-    margin-bottom: 14px;
-  }
-
-  .smart-balance__list {
-    gap: 8px;
-  }
-
-  .smart-balance__item {
-    gap: 10px;
-    padding: 10px 12px;
-    font-size: 15px;
-    line-height: 1.45;
-  }
-
-  .smart-balance__index {
-    width: 26px;
-    height: 26px;
-    font-size: 11px;
-    margin-top: 2px;
-  }
-}
-
-@media (max-width: 479px) {
-  .dashboard {
-    gap: 16px;
-  }
-
-  .dashboard__title {
-    margin-bottom: 4px;
-  }
-
-  .smart-balance__header {
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  .smart-balance__bulb {
-    width: 32px;
-    height: 32px;
-  }
-
-  .smart-balance__list {
-    gap: 6px;
-  }
-
-  .smart-balance__item {
-    padding: 8px 10px;
-    gap: 8px;
-    font-size: 14px;
-    line-height: 1.42;
-  }
-
-  .smart-balance__index {
-    width: 24px;
-    height: 24px;
-    font-size: 10px;
-  }
-}
-
 .dashboard__donut-wrap {
   display: flex;
   flex-direction: column;
@@ -361,4 +277,110 @@ html[data-theme='dark'] .card.smart-balance:hover {
 .chip--shared {
   background: var(--color-primary-12);
   color: var(--color-primary-muted);
+}
+
+/* Мобильная и планшетная вёрстка — в конце файла */
+@media (max-width: 767px) {
+  .dashboard__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .expenses-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 calc(-1 * var(--card-padding, 12px));
+    padding: 0 var(--card-padding, 12px);
+  }
+
+  .expenses-table__head,
+  .expenses-table__row {
+    min-width: 520px;
+  }
+
+  .smart-balance__header {
+    margin-bottom: 14px;
+  }
+
+  .smart-balance__list {
+    gap: 8px;
+  }
+
+  .smart-balance__item {
+    gap: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .smart-balance__item:hover {
+    transform: none;
+  }
+
+  .smart-balance__index {
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+}
+
+@media (max-width: 479px) {
+  .dashboard {
+    gap: 10px;
+  }
+
+  .smart-balance__header {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .smart-balance__bulb {
+    width: 32px;
+    height: 32px;
+  }
+
+  .smart-balance__list {
+    gap: 6px;
+  }
+
+  .smart-balance__item {
+    padding: 8px 10px;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .smart-balance__index {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dashboard {
+    gap: 18px;
+  }
+
+  .dashboard__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .dashboard .card__header {
+    margin-bottom: 16px;
+  }
+
+  .overview__value {
+    font-size: 19px;
+    line-height: 26px;
+  }
+
+  .smart-balance__item {
+    padding: 11px 13px;
+    font-size: 15px;
+  }
+
+  .donut {
+    width: min(180px, 42vw);
+  }
 }
