@@ -7,7 +7,7 @@ import AsyncDataView from '../../shared/ui/AsyncDataView'
 import {
   fetchSupportContactsRequest,
   fetchSupportFaqRequest,
-  sendSupportMessageRequest,
+  sendSupportChatMessageRequest,
   type SupportFaqItem as FaqModel
 } from '../../shared/api/supportApi'
 import './support.css'
@@ -17,6 +17,13 @@ interface FaqItemProps {
   item: FaqModel
   open: boolean
   onToggle: () => void
+}
+
+interface ChatMessage {
+  id: string
+  author: string
+  text: string
+  fromUser?: boolean
 }
 
 function FaqItem({ item, open, onToggle }: FaqItemProps) {
@@ -41,11 +48,15 @@ export default function SupportPage() {
   })
   const [openId, setOpenId] = useState<string | null>(null)
   const [message, setMessage] = useState('')
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    {
+      id: 'welcome',
+      author: 'Поддержка FinPair',
+      text: 'Здравствуйте! Чем мы можем вам помочь сегодня? 😊'
+    }
+  ])
   const [isSending, setIsSending] = useState(false)
-  const [sendState, setSendState] = useState<{ error: string; success: string }>({
-    error: '',
-    success: ''
-  })
+  const [sendError, setSendError] = useState('')
 
   const faq = data?.faq ?? []
   const contacts = data?.contacts
@@ -56,22 +67,34 @@ export default function SupportPage() {
   const onSendMessage = async () => {
     const trimmed = message.trim()
     if (!trimmed) {
-      setSendState({ error: 'Введите сообщение перед отправкой', success: '' })
+      setSendError('Введите сообщение перед отправкой')
       return
     }
 
     setIsSending(true)
-    setSendState({ error: '', success: '' })
+    setSendError('')
 
     try {
-      await sendSupportMessageRequest({ message: trimmed })
+      const userMessage: ChatMessage = {
+        id: `user-${Date.now()}`,
+        author: 'Вы',
+        text: trimmed,
+        fromUser: true
+      }
+      setChatMessages((items) => [...items, userMessage])
+
+      const answer = await sendSupportChatMessageRequest({ message: trimmed })
+      setChatMessages((items) => [
+        ...items,
+        {
+          id: `bot-${Date.now()}`,
+          author: 'Поддержка FinPair',
+          text: answer.outputText
+        }
+      ])
       setMessage('')
-      setSendState({ error: '', success: 'Сообщение отправлено в поддержку' })
     } catch {
-      setSendState({
-        error: 'Не удалось отправить сообщение. Попробуйте ещё раз.',
-        success: ''
-      })
+      setSendError('Не удалось получить ответ чат-бота. Попробуйте ещё раз.')
     } finally {
       setIsSending(false)
     }
@@ -118,18 +141,23 @@ export default function SupportPage() {
             <div className="chat-head__avatar">💬</div>
             <div>
               <h3 className="chat-head__title">Чат с поддержкой</h3>
-              <p className="chat-head__hint">Обычно отвечаем за 5 минут</p>
+              <p className="chat-head__hint">Бот отвечает на вопросы о FinPair</p>
             </div>
           </div>
 
-          <div className="chat-msg">
-            <div className="chat-msg__avatar">F</div>
-            <div>
-              <div className="chat-msg__name">Поддержка FinPair</div>
-              <div className="chat-msg__text">
-                Здравствуйте! Чем мы можем вам помочь сегодня? 😊
+          <div className="chat-thread" aria-live="polite">
+            {chatMessages.map((item) => (
+              <div
+                className={'chat-msg' + (item.fromUser ? ' chat-msg--user' : '')}
+                key={item.id}
+              >
+                <div className="chat-msg__avatar">{item.fromUser ? 'Вы' : 'F'}</div>
+                <div>
+                  <div className="chat-msg__name">{item.author}</div>
+                  <div className="chat-msg__text">{item.text}</div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
 
           <form
@@ -149,14 +177,9 @@ export default function SupportPage() {
               {isSending ? 'Отправка…' : 'Отправить сообщение'}
             </Button>
           </form>
-          {sendState.error && (
+          {sendError && (
             <p className="auth-form__common-error" role="alert">
-              {sendState.error}
-            </p>
-          )}
-          {sendState.success && (
-            <p className="support__send-success" role="status">
-              {sendState.success}
+              {sendError}
             </p>
           )}
         </Card>
