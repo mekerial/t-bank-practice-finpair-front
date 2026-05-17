@@ -70,8 +70,15 @@
   --motion-ease-out: cubic-bezier(0.33, 1, 0.68, 1);
 
   --sidebar-width: 256px;
-  /* Порог «планшет и уже»: drawer и @media в layout.css — max-width: 1023px */
   --header-height: 93px;
+
+  /* Адаптив: те же px в @media (см. breakpoints.css, mobile.css, tablet.css)
+   * phone ≤767 | tablet 768–1023 | desktop ≥1024 | phone-sm ≤479 */
+  --bp-phone-max: 767px;
+  --bp-tablet-min: 768px;
+  --bp-tablet-max: 1023px;
+  --bp-desktop-min: 1024px;
+  --bp-phone-sm-max: 479px;
 
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     sans-serif;
@@ -201,30 +208,11 @@ html[data-theme='dark'] .guest-welcome__hero {
   );
 }
 
-/* Общая компактность страниц приложения на очень узких экранах */
+/* Дополнительные правки на очень узких экранах (базовые размеры — mobile.css) */
 @media (max-width: 479px) {
-  .dashboard__title,
-  .transactions__title,
-  .analytics__title,
-  .goals__title,
-  .settings__title,
-  .support__title {
-    font-size: 22px;
-    line-height: 28px;
-    font-weight: 700;
-  }
-
   .profile-page__title {
     font-size: 20px;
     line-height: 26px;
-  }
-
-  .transactions,
-  .analytics,
-  .goals,
-  .settings,
-  .support {
-    gap: 16px;
   }
 
   .guest-welcome {

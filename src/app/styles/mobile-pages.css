@@ -1,0 +1,389 @@
+/**
+ * Карточки на узких экранах (≤1023px). Импорт после css страницы.
+ */
+
+@media (max-width: 767px) {
+  :root {
+    --mobile-card-padding: 16px;
+    --mobile-card-gap: 12px;
+    --mobile-card-radius: 12px;
+    --mobile-stat-padding: 16px;
+  }
+
+  .card,
+  .dashboard .card,
+  .transactions .card,
+  .analytics .card,
+  .goals .card,
+  .settings .card,
+  .support .card {
+    padding: var(--mobile-card-padding);
+    border-radius: var(--mobile-card-radius);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card__header {
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+
+  .card__title {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .main-goal {
+    padding: var(--mobile-card-padding);
+    border-radius: var(--mobile-card-radius);
+  }
+
+  .goal-card {
+    padding: var(--mobile-card-padding);
+    border-radius: var(--mobile-card-radius);
+  }
+
+  .goal-tip {
+    padding: var(--mobile-card-padding);
+    border-radius: var(--mobile-card-radius);
+  }
+
+  .profile {
+    padding: var(--mobile-card-padding);
+    border-radius: var(--mobile-card-radius);
+  }
+
+  .profiles {
+    gap: var(--mobile-card-gap);
+  }
+
+  .split {
+    gap: var(--mobile-card-gap);
+  }
+
+  .split__btn {
+    min-height: 48px;
+    padding: 14px var(--mobile-card-padding);
+    border-radius: var(--mobile-card-radius);
+  }
+
+  .insight {
+    padding: var(--mobile-card-padding);
+    border-radius: var(--mobile-card-radius);
+  }
+
+  .insights {
+    gap: var(--mobile-card-gap);
+  }
+
+  .support__grid {
+    gap: var(--mobile-card-gap);
+  }
+
+  .faq__button {
+    min-height: 48px;
+    padding: 14px var(--mobile-card-padding);
+  }
+}
+
+@media (max-width: 479px) {
+  :root {
+    --mobile-card-padding: 14px;
+    --mobile-stat-padding: 14px;
+    --mobile-card-gap: 10px;
+  }
+
+  .card__title {
+    font-size: 15px;
+    line-height: 20px;
+  }
+}
+
+/*
+ * Показатели: столбик карточек; внутри — подпись | сумма, подпись снизу.
+ * Контекст страницы (.transactions …) — выше специфичность, чем у css маршрута,
+ * чтобы на мобильном не возвращалась сетка 3 колонки после переходов в SPA.
+ */
+@media (max-width: 1023px) {
+  .transactions .transactions__summary,
+  .analytics .kpi-grid,
+  .profile-page .profile-page__tiles,
+  .goals .main-goal__stats,
+  .goals .goal-card__stats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .transactions .summary-card,
+  .analytics .kpi,
+  .profile-page .profile-page__tile,
+  .goals .main-goal__stat,
+  .goals .goal-stat {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      'stat-label stat-value'
+      'stat-hint stat-hint';
+    column-gap: 10px;
+    row-gap: 8px;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    box-shadow: none;
+  }
+
+  .transactions .summary-card__label,
+  .analytics .kpi__label,
+  .profile-page .profile-page__tile-label,
+  .goals .main-goal__stat-label,
+  .goals .goal-stat__label {
+    grid-area: stat-label;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+    font: 600 14px/18px var(--font-family);
+    color: var(--color-text-secondary);
+    letter-spacing: normal;
+    text-transform: none;
+    overflow-wrap: anywhere;
+  }
+
+  .goals .main-goal__stat-label {
+    color: inherit;
+    opacity: 0.9;
+  }
+
+  .transactions .summary-card__value,
+  .analytics .kpi__value,
+  .profile-page .profile-page__tile-value,
+  .goals .main-goal__stat-value,
+  .goals .goal-stat__value {
+    grid-area: stat-value;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+    max-width: 100%;
+    font: 700 17px/22px var(--font-family);
+    color: var(--color-text);
+    text-align: right;
+    justify-self: end;
+    align-self: center;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .transactions .summary-card__value--income {
+    color: var(--color-primary);
+  }
+
+  .transactions .summary-card__value--expense {
+    color: var(--color-danger);
+  }
+
+  .goals .main-goal__stat-value,
+  .goals .goal-stat__value {
+    color: inherit;
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .transactions .summary-card__hint,
+  .transactions .summary-card__hint--accent,
+  .analytics .kpi__hint {
+    grid-area: stat-hint;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-width: 0;
+    font: 400 13px/1.45 var(--font-family);
+    color: var(--color-text-muted);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .transactions .summary-card__hint--accent {
+    color: var(--color-text-secondary);
+  }
+
+  .transactions .summary-card__hint-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .transactions .summary-card__hint-delta {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+  }
+
+  .profile-page .profile-page__tile--members {
+    grid-template-areas:
+      'stat-label'
+      'stat-hint';
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    align-items: start;
+  }
+
+  .profile-page .profile-page__tile--members .profile-page__tile-label {
+    grid-area: stat-label;
+  }
+
+  .profile-page .profile-page__tile--members .profile-page__member-chips,
+  .profile-page .profile-page__tile--members .profile-page__tile-value {
+    grid-area: stat-hint;
+    justify-self: start;
+    text-align: left;
+    max-width: 100%;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  /* Дашборд: строки обзора */
+  .dashboard .overview__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    gap: 4px 10px;
+    align-items: start;
+    padding: 14px 0;
+  }
+
+  .dashboard .overview__label {
+    margin: 0;
+    min-width: 0;
+    font: 400 14px/18px var(--font-family);
+    color: var(--color-text-secondary);
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard .overview__value {
+    margin: 0;
+    min-width: 0;
+    max-width: 100%;
+    font: 700 17px/22px var(--font-family);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dashboard .overview__value-stack {
+    align-items: flex-end;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .dashboard .overview__sub {
+    font-size: 12px;
+    line-height: 1.35;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: right;
+  }
+
+  /* Аналитика: графики и сетка карточек */
+  .analytics .analytics__grid-2 {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .analytics .analytics__grid-2 > .card,
+  .analytics > .card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .analytics .card__body {
+    min-width: 0;
+  }
+
+  .analytics .chart-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .analytics .chart-block .chart {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+  }
+
+  .analytics .bar-legend {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 14px;
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.35;
+    width: 100%;
+    text-align: center;
+  }
+
+  .analytics .bar-legend span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .analytics .insight__text {
+    overflow-wrap: anywhere;
+  }
+
+  .analytics .kpi__hint:empty {
+    display: none;
+  }
+
+  .analytics .kpi:not(:has(.kpi__hint:not(:empty))) {
+    grid-template-areas: 'stat-label stat-value';
+    grid-template-rows: auto;
+    row-gap: 0;
+  }
+}
+
+@media (max-width: 479px) {
+  .transactions .summary-card,
+  .analytics .kpi,
+  .profile-page .profile-page__tile,
+  .goals .main-goal__stat,
+  .goals .goal-stat {
+    padding: 14px;
+    column-gap: 8px;
+  }
+
+  .transactions .summary-card__value,
+  .analytics .kpi__value,
+  .dashboard .overview__value {
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .transactions .summary-card__label,
+  .analytics .kpi__label,
+  .dashboard .overview__label {
+    font-size: 13px;
+    line-height: 17px;
+  }
+}

@@ -9,6 +9,11 @@ export interface UseAsyncDataResult<T> {
   refetch: () => void
 }
 
+/**
+ * Загружает данные при монтировании, при смене `cacheKey` и после refetch().
+ * Повторная загрузка с тем же ключом (refetch) не уводит статус в полный лоадер —
+ * форма остаётся на экране (stale-while-revalidate).
+ */
 export function useAsyncData<T>(
   cacheKey: string | number,
   fetcher: () => Promise<T>

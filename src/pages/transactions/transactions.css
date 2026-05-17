@@ -1,7 +1,7 @@
 .transactions {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-section, 24px);
 }
 
 .transactions__header {
@@ -22,17 +22,6 @@
   gap: 12px;
 }
 
-@media (max-width: 1023px) {
-  .transactions__header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .transactions__filters {
-    grid-template-columns: 1fr;
-  }
-}
-
 .filter-input {
   display: flex;
   align-items: center;
@@ -40,8 +29,8 @@
   background: var(--color-surface-alt);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-input);
-  padding: 0 16px;
-  height: 44px;
+  padding: 0 12px;
+  height: var(--control-height, 40px);
   box-sizing: border-box;
 }
 
@@ -79,12 +68,6 @@
   gap: 16px;
 }
 
-@media (max-width: 1023px) {
-  .transactions__summary {
-    grid-template-columns: 1fr;
-  }
-}
-
 .summary-card {
   background: var(--color-surface-alt);
   border: 1px solid var(--color-border);
@@ -111,8 +94,8 @@
 .summary-card__value {
   font-size: 24px;
   font-weight: 700;
-  color: var(--color-text);
   line-height: 32px;
+  color: var(--color-text);
 }
 
 .summary-card__value--income {
@@ -342,6 +325,7 @@
   margin: 0;
 }
 
+/* Единый размер для всех контролов */
 .transactions-form input,
 .transactions-form select,
 .transactions-form .input,
@@ -452,7 +436,176 @@
   margin-top: 8px;
 }
 
-@media (max-width: 1023px) {
+/* Мобильная компактность — в конце файла, чтобы не перебивалось базовыми стилями */
+@media (max-width: 767px) {
+  .transactions {
+    gap: 10px;
+  }
+
+  .transactions__header {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .transactions__title {
+    flex: 1 1 100%;
+    min-width: 0;
+    margin: 0;
+    font-size: 20px;
+    line-height: 26px;
+  }
+
+  .transactions__header .btn {
+    flex: 1 1 auto;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 14px;
+    justify-content: center;
+  }
+
+  .transactions__header .btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .transactions__add-label {
+    margin-left: 6px;
+  }
+
+  .transactions__filters {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .filter-input {
+    height: 44px;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+  }
+
+  .filter-input__icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .filter-input__control {
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  .summary-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .tx-row {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    row-gap: 2px;
+    align-items: start;
+    padding: 12px 0;
+  }
+
+  .tx-row__avatar {
+    grid-row: 1 / span 2;
+    align-self: center;
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .tx-row__main {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  .tx-row__top {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tx-row__category {
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .tx-row__date {
+    font-size: 12px;
+    line-height: 16px;
+    margin-top: 2px;
+  }
+
+  .tx-row__amount {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    align-self: center;
+    font-size: 14px;
+    line-height: 18px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tx-row .chip {
+    font-size: 11px;
+    padding: 3px 7px;
+    flex-shrink: 0;
+  }
+
+  .tx-list__empty {
+    padding: 20px 12px;
+    font-size: 13px;
+  }
+
+  .pagination {
+    margin-top: 12px;
+    padding-top: 10px;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .pagination__pages {
+    justify-content: center;
+    flex: 1 1 100%;
+    order: 3;
+  }
+
+  .pagination__btn,
+  .pagination__page {
+    min-height: 40px;
+    min-width: 40px;
+    padding: 8px 10px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .pagination__btn--edge {
+    font-size: 12px;
+  }
+
+  .transactions-form input,
+  .transactions-form select,
+  .transactions-form .input__field,
+  .transactions-form__select {
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
+    font-size: 16px;
+  }
+
   .transactions-form__row {
     grid-template-columns: 1fr;
   }
@@ -461,33 +614,118 @@
     flex-direction: column-reverse;
     align-items: stretch;
   }
+
+  .transactions-form__actions .btn {
+    min-height: 36px;
+  }
 }
 
 @media (max-width: 479px) {
-  .summary-card {
-    padding: 16px;
+  .transactions__title {
+    font-size: 18px;
+    line-height: 24px;
+    flex: 1 1 auto;
   }
 
-  .summary-card__value {
-    font-size: 20px;
-    line-height: 28px;
+  .transactions__header .btn {
+    flex: 0 0 auto;
+    min-width: 44px;
+    padding: 10px 12px;
   }
 
-  .pagination {
-    justify-content: flex-end;
-  }
-
-  .pagination__btn,
-  .pagination__page {
-    padding: 6px 10px;
+  .transactions__add-label {
+    display: none;
   }
 
   .tx-row {
-    gap: 10px;
-    padding: 12px 0;
+    grid-template-columns: 32px minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+  }
+
+  .tx-row__avatar {
+    grid-row: 1 / span 3;
   }
 
   .tx-row__amount {
+    grid-column: 2;
+    grid-row: 3;
+    justify-self: end;
+    align-self: start;
+    max-width: none;
+    margin-top: 2px;
+  }
+
+  .pagination__btn-text {
+    display: none;
+  }
+
+  .pagination__btn--edge {
+    padding: 8px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .transactions {
+    gap: 16px;
+  }
+
+  .transactions__title {
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  .transactions__header .btn {
+    min-height: 38px;
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+
+  .transactions__filters {
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+  }
+
+  .filter-input {
+    height: 38px;
+    padding: 0 12px;
+  }
+
+  .filter-input__control {
     font-size: 15px;
+  }
+
+  .transactions .card {
+    padding: 16px;
+  }
+
+  .transactions .card__title {
+    font-size: 17px;
+    line-height: 22px;
+  }
+
+  .tx-row {
+    padding: 12px 0;
+    gap: 10px;
+  }
+
+  .tx-row__avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .tx-row__category {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .tx-row__amount {
+    font-size: 14px;
+  }
+
+  .transactions-form__actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
   }
 }

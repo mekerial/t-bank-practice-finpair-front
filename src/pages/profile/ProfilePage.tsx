@@ -21,6 +21,7 @@ import { getErrorMessage } from '../../shared/lib/asyncUtils'
 import { fetchAuthUser, useAppDispatch } from '../../app/store'
 import { isValidHouseholdId } from '../../shared/lib/householdId'
 import './profile.css'
+import '../../app/styles/mobile-pages.css'
 
 const SUCCESS_TOAST_MS = 6000
 

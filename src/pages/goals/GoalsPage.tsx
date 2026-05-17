@@ -14,7 +14,7 @@ import {
   writeStoredFocusedGoalId
 } from '../../shared/lib/goalFocusStorage'
 import {
-  clearCreateGoalError,
+clearCreateGoalError,
   clearMainGoal,
   completeGoal,
   createGoal,
@@ -32,6 +32,7 @@ import { useAsyncData } from '../../shared/hooks/useAsyncData'
 import { fetchCoupleRequest } from '../../shared/api/settingsApi'
 import type { CoupleDetails } from '../../shared/api/settingsApi'
 import './goals.css'
+import '../../app/styles/mobile-pages.css'
 
 type ProgressVariant = 'default' | 'light'
 type GoalStatus = 'not-started' | 'in-progress' | 'almost-done' | 'done'

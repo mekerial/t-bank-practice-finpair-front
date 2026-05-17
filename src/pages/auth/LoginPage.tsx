@@ -7,6 +7,7 @@ import { getErrorMessage } from '../../shared/lib/asyncUtils'
 import Input from '../../shared/ui/Input'
 import Button from '../../shared/ui/Button'
 import './auth.css'
+import '../../app/styles/mobile-pages.css'
 
 interface LoginForm {
   email: string

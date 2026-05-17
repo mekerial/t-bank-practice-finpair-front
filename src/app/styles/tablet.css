@@ -1,0 +1,91 @@
+/**
+ * Планшет: min-width 768px and max-width 1023px.
+ * Пороги: breakpoints.css
+ */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --font-h1: 700 24px/30px var(--font-family);
+    --font-h2: 600 20px/26px var(--font-family);
+    --font-h3: 600 17px/22px var(--font-family);
+    --font-h4: 600 15px/21px var(--font-family);
+    --font-body: 400 14px/20px var(--font-family);
+    --font-button: 600 14px/20px var(--font-family);
+    --space-page: 20px;
+    --space-section: 18px;
+    --control-height: 40px;
+    --card-padding: 16px;
+    --card-header-gap: 12px;
+  }
+
+  .main-layout__main {
+    padding: var(--space-page);
+  }
+
+  .card {
+    padding: var(--card-padding);
+  }
+
+  .card__title {
+    font-size: 17px;
+    line-height: 22px;
+  }
+
+  .btn {
+    padding: 9px 16px;
+    font-size: 14px;
+    min-height: var(--control-height);
+  }
+
+  .field__input {
+    min-height: var(--control-height);
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+
+  .dashboard,
+  .transactions,
+  .analytics,
+  .goals,
+  .settings,
+  .support,
+  .profile-page {
+    gap: var(--space-section);
+  }
+}
+
+/* На планшете — полный заголовок страницы без сворачивания */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .header {
+    padding: 14px 20px;
+  }
+
+  .header--intro-collapsed .header__title--full,
+  .header--intro-expanded .header__title--full {
+    display: block;
+  }
+
+  .header--intro-collapsed .header__title--short,
+  .header--intro-expanded .header__title--short {
+    display: none;
+  }
+
+  .header--intro-collapsed .header__intro-body,
+  .header--intro-expanded .header__intro-body {
+    display: block;
+    margin-top: 6px;
+  }
+
+  .header--intro-collapsed .header__intro-chevron {
+    display: none;
+  }
+
+  .header__title--full {
+    font-size: 20px;
+    line-height: 1.3;
+  }
+
+  .header__subtitle {
+    font-size: 14px;
+  }
+}

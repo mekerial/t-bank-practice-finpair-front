@@ -11,6 +11,7 @@ import {
   type SupportFaqItem as FaqModel
 } from '../../shared/api/supportApi'
 import './support.css'
+import '../../app/styles/mobile-pages.css'
 
 interface FaqItemProps {
   item: FaqModel
@@ -148,12 +149,20 @@ export default function SupportPage() {
               {isSending ? 'Отправка…' : 'Отправить сообщение'}
             </Button>
           </form>
-          {sendState.error && <p className="auth-form__common-error">{sendState.error}</p>}
-          {sendState.success && <p>{sendState.success}</p>}
+          {sendState.error && (
+            <p className="auth-form__common-error" role="alert">
+              {sendState.error}
+            </p>
+          )}
+          {sendState.success && (
+            <p className="support__send-success" role="status">
+              {sendState.success}
+            </p>
+          )}
         </Card>
       </div>
 
-      <Card title="Контактная информация">
+      <Card title="Контактная информация" className="support__contacts-card">
         <div className="contacts">
           <div className="contacts__item">
             <div className="contacts__label">📧 Email поддержки</div>

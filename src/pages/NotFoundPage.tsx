@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ROUTES } from '../shared/config/routes'
 import ThemeToggle from '../shared/ui/ThemeToggle/ThemeToggle'
 import './NotFoundPage.css'
+import '../app/styles/mobile-pages.css'
 
 export default function NotFoundPage() {
   return (

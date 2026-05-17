@@ -8,6 +8,7 @@ import { registerRequest } from '../../shared/api/authApi'
 import Input from '../../shared/ui/Input'
 import Button from '../../shared/ui/Button'
 import './auth.css'
+import '../../app/styles/mobile-pages.css'
 
 interface RegisterForm {
   name: string

@@ -26,6 +26,7 @@ import { fetchAuthUser, useAppDispatch } from '../../app/store'
 import { getErrorMessage } from '../../shared/lib/asyncUtils'
 import { isValidHouseholdId } from '../../shared/lib/householdId'
 import './settings.css'
+import '../../app/styles/mobile-pages.css'
 
 interface SplitOption {
   id: SplitType
@@ -451,7 +452,6 @@ export default function SettingsPage() {
                         onChange={(e) =>
                           field.onChange(e.target.value.replace(/\D/g, ''))
                         }
-                        onWheel={(e) => e.preventDefault()}
                       />
                     )}
                   />
