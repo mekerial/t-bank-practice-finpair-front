@@ -92,24 +92,6 @@ export async function fetchDashboard(): Promise<DashboardPageData> {
   }
   const d = data.data
   const partners = d.partnerSummary ?? []
-  const totalPartnerExpense = partners.reduce(
-    (sum, partner) => sum + Math.max(0, partner.expense ?? 0),
-    0
-  )
-  const normalizedShares = partners.map((partner) => {
-    const expense = Math.max(0, partner.expense ?? 0)
-    if (totalPartnerExpense <= 0) return 0
-    return (expense / totalPartnerExpense) * 100
-  })
-  const normalizedShareByUserId = new Map<string, number>()
-  partners.forEach((partner, index) => {
-    if (partners.length === 2 && index === 1 && totalPartnerExpense > 0) {
-      const first = normalizedShareByUserId.get(partners[0].userId) ?? 0
-      normalizedShareByUserId.set(partner.userId, toSafePercent(100 - first))
-      return
-    }
-    normalizedShareByUserId.set(partner.userId, toSafePercent(normalizedShares[index] ?? 0))
-  })
   const transactions = await fetchTransactionsRequest().catch(() => [])
   const categoryRows = transactions
     .filter((t) => t.type === 'expense')
@@ -172,12 +154,8 @@ export async function fetchDashboard(): Promise<DashboardPageData> {
     balance: monthlyFromTx.balance,
     loadPercent: toLoadPercent(monthlyFromTx.financialLoadPercent),
     partnerSplit: {
-      a: partners[0]
-        ? (normalizedShareByUserId.get(partners[0].userId) ?? 0)
-        : 0,
-      b: partners[1]
-        ? (normalizedShareByUserId.get(partners[1].userId) ?? 0)
-        : 0
+      a: toSafePercent(partners[0]?.sharePercent ?? 0),
+      b: toSafePercent(partners[1]?.sharePercent ?? 0)
     }
   }
 
