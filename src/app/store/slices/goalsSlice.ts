@@ -27,7 +27,6 @@ export interface CreateGoalPayload {
   deadline: string
   collected: string
   target: string
-  monthly: string
   isMain: boolean
 }
 
@@ -143,12 +142,11 @@ export const createGoal = createAsyncThunk<
   try {
     const collected = Number(payload.collected)
     const target = Number(payload.target)
-    const monthly = Number(payload.monthly)
 
-    if (Number.isNaN(collected) || Number.isNaN(target) || Number.isNaN(monthly)) {
+    if (Number.isNaN(collected) || Number.isNaN(target)) {
       return rejectWithValue('Проверьте числовые поля в форме')
     }
-    if (target <= 0 || collected < 0 || monthly < 0 || collected > target) {
+    if (target <= 0 || collected < 0 || collected > target) {
       return rejectWithValue('Проверьте значения цели: они некорректны')
     }
 
@@ -156,7 +154,6 @@ export const createGoal = createAsyncThunk<
       title: payload.title.trim(),
       targetAmount: target,
       currentAmount: collected,
-      monthlyContribution: monthly,
       deadline: payload.deadline || undefined
     })
 

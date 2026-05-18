@@ -43,7 +43,6 @@ describe('goalsSlice reducer', () => {
         deadline: '2026-06-01',
         collected: '10000',
         target: '100000',
-        monthly: '10000',
         isMain: true
       })
     )
@@ -84,7 +83,6 @@ describe('goalsSlice reducer', () => {
           deadline: '',
           collected: '0',
           target: '0',
-          monthly: '0',
           isMain: false
         },
         'Ошибка'
