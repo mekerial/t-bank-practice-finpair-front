@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Card from '../../shared/ui/Card'
 import Button from '../../shared/ui/Button'
 import { IconChevronRight } from '../../shared/ui/icons'
@@ -57,6 +57,39 @@ export default function SupportPage() {
   ])
   const [isSending, setIsSending] = useState(false)
   const [sendError, setSendError] = useState('')
+  const chatThreadRef = useRef<HTMLDivElement>(null)
+  const supportGridRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    if (status !== 'success') return
+
+    const grid = supportGridRef.current
+    const faqCard = grid?.querySelector<HTMLElement>('.support-faq-card')
+    const chatCard = grid?.querySelector<HTMLElement>('.chat-card')
+    if (!faqCard || !chatCard) return
+
+    const syncChatHeight = () => {
+      if (window.matchMedia('(min-width: 1024px)').matches) {
+        chatCard.style.removeProperty('--chat-sync-height')
+        return
+      }
+
+      const faqHeight = Math.round(faqCard.getBoundingClientRect().height)
+      if (faqHeight > 0) {
+        chatCard.style.setProperty('--chat-sync-height', `${faqHeight}px`)
+      }
+    }
+
+    syncChatHeight()
+    window.addEventListener('resize', syncChatHeight)
+    return () => window.removeEventListener('resize', syncChatHeight)
+  }, [status, data?.faq?.length])
+
+  useEffect(() => {
+    const thread = chatThreadRef.current
+    if (!thread) return
+    thread.scrollTo({ top: thread.scrollHeight, behavior: 'smooth' })
+  }, [chatMessages, isSending])
 
   const faq = data?.faq ?? []
   const contacts = data?.contacts
@@ -118,8 +151,8 @@ export default function SupportPage() {
         onRetry={refetch}
         loadingLabel="Загружаем поддержку…"
       >
-      <div className="support__grid">
-        <Card title="Часто задаваемые вопросы">
+      <div ref={supportGridRef} className="support__grid">
+        <Card title="Часто задаваемые вопросы" className="support-faq-card">
           <div className="faq-list">
             {faq.length > 0 ? (
               faq.map((f) => (
@@ -136,7 +169,8 @@ export default function SupportPage() {
           </div>
         </Card>
 
-        <Card>
+        <Card className="chat-card">
+          <div className="chat-card__inner">
           <div className="chat-head">
             <div className="chat-head__avatar">💬</div>
             <div>
@@ -145,7 +179,11 @@ export default function SupportPage() {
             </div>
           </div>
 
-          <div className="chat-thread" aria-live="polite">
+          <div
+            ref={chatThreadRef}
+            className="chat-thread"
+            aria-live="polite"
+          >
             {chatMessages.map((item) => (
               <div
                 className={'chat-msg' + (item.fromUser ? ' chat-msg--user' : '')}
@@ -160,6 +198,7 @@ export default function SupportPage() {
             ))}
           </div>
 
+          <div className="chat-card__footer">
           <form
             className="support__chat-form"
             onSubmit={(e) => {
@@ -182,6 +221,8 @@ export default function SupportPage() {
               {sendError}
             </p>
           )}
+          </div>
+          </div>
         </Card>
       </div>
 

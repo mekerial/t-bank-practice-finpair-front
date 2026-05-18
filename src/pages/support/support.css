@@ -45,8 +45,56 @@
   min-height: 0;
 }
 
-.support__grid > .card:last-child .support__chat-form {
-  margin-top: auto;
+.support__grid > .card.chat-card {
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+  .support__grid > .card.chat-card {
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    align-self: stretch;
+  }
+}
+
+.support__grid > .card.chat-card .card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chat-card__inner {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.chat-card .chat-head {
+  margin-bottom: 0;
+}
+
+.chat-card__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.chat-card .support__chat-form {
+  margin-top: 0;
+}
+
+.chat-card .auth-form__common-error {
+  margin: 0;
 }
 
 @media (max-width: 767px) {
@@ -110,7 +158,7 @@
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .chat-head__avatar {
@@ -149,11 +197,27 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 12px;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+}
+
+.chat-thread::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-thread::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
 }
 
 .chat-thread .chat-msg {
   margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 .chat-msg--user {
@@ -199,14 +263,15 @@
 .chat-textarea {
   width: 100%;
   min-height: 80px;
+  max-height: 120px;
   padding: 12px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   font: var(--font-body);
   color: var(--color-text);
   background: var(--color-surface-alt);
-  resize: vertical;
-  margin-bottom: 12px;
+  resize: none;
+  margin-bottom: 0;
   outline: none;
 }
 
@@ -292,7 +357,6 @@
   }
 }
 
-/* Планшет: FAQ и чат в одну линию, одинаковая высота карточек */
 @media (min-width: 768px) and (max-width: 1023px) {
   .support {
     gap: 16px;
@@ -315,7 +379,6 @@
   }
 }
 
-/* Мобильный и планшет ≤1023 — после tablet-блока */
 @media (max-width: 1023px) {
   .support {
     gap: 14px;
@@ -344,22 +407,24 @@
     align-items: stretch;
   }
 
-  .support__grid > .card {
+  .support__grid > .card:not(.chat-card) {
     height: auto;
     min-height: 0;
   }
 
-  .support__grid > .card .card__body {
-    min-width: 0;
+  .support__grid > .card.chat-card {
+    height: var(--chat-sync-height, auto);
+    max-height: var(--chat-sync-height, none);
+    min-height: var(--chat-sync-height, 0);
   }
 
-  .support__grid > .card:last-child .support__chat-form {
-    margin-top: 12px;
+  .support__grid > .card.chat-card .card__body {
+    min-width: 0;
   }
 
   .chat-head {
     align-items: center;
-    margin-bottom: 14px;
+    margin-bottom: 0;
   }
 
   .chat-head > div:last-child {
@@ -424,7 +489,6 @@
     box-sizing: border-box;
   }
 
-  /* Контакты: на всю ширину карточки, по центру (не 3 колонки вбок) */
   .support__contacts-card .contacts {
     display: flex !important;
     flex-direction: column;
