@@ -5,6 +5,42 @@
 **FinPair Frontend** — SPA-приложение на React и TypeScript для совместного управления финансами пары.  
 Приложение отвечает за отображение финансового состояния пары, управление транзакциями, аналитику, цели, настройки и раздел поддержки.
 
+## Полезные ссылки
+
+| | |
+| :--- | :--- |
+| **Демонстрация работы приложения** | [FinPair — демонстрация (Google Drive)](https://drive.google.com/file/d/1KAcFmkzz390Ojw7f0YfeGWQ0te4wSADO/view?usp=sharing) |
+| **Связанный репозиторий backend** | [mekerial/t-bank-practice-finpair-back](https://github.com/mekerial/t-bank-practice-finpair-back) |
+
+---
+
+## Локальный запуск
+
+### Требования
+
+- [Docker](https://www.docker.com/)
+- доступный backend API
+
+### Сборка образа
+
+```bash
+docker build -t finpair-frontend --build-arg VITE_API_BASE_URL= .
+```
+
+### Запуск контейнера
+
+```bash
+docker run --rm -p 8080:80 finpair-frontend
+```
+
+Приложение: **http://localhost:8080**
+
+API в контейнере проксируется через nginx (`nginx.conf`) на `https://mindliftapi.mekerial.ru`.  
+Полный стек (БД и сервисы) поднимается из [t-bank-practice-finpair-back](https://github.com/mekerial/t-bank-practice-finpair-back).
+
+
+---
+
 ## Назначение проекта
 
 Основная задача frontend-приложения — предоставить удобный интерфейс для совместного учета финансов пары.
@@ -43,90 +79,6 @@
 - позволяет переиспользовать общие модули;
 - разделяет UI, конфигурацию и бизнес-логику.
 
-## Структура репозитория
-
-```text
-t-bank-practice-finpair-front/
-├── .env.example
-├── .gitignore
-├── .prettierignore
-├── .prettierrc
-├── eslint.config.js
-├── index.html
-├── package-lock.json
-├── package.json
-├── README.md
-├── tsconfig.app.json
-├── tsconfig.json
-├── tsconfig.node.json
-├── vite.config.ts
-└── src/
-    ├── App.tsx
-    ├── main.tsx
-    ├── vite-env.d.ts
-    ├── app/
-    │   ├── providers/
-    │   ├── router/
-    │   │   └── AppRouter.tsx
-    │   └── styles/
-    │       └── index.css
-    ├── pages/
-    │   ├── auth/
-    │   │   ├── LoginPage.tsx
-    │   │   ├── RegisterPage.tsx
-    │   │   └── auth.css
-    │   ├── dashboard/
-    │   │   ├── DashboardPage.tsx
-    │   │   └── dashboard.css
-    │   ├── transactions/
-    │   │   ├── TransactionsPage.tsx
-    │   │   └── transactions.css
-    │   ├── analytics/
-    │   │   ├── AnalyticsPage.tsx
-    │   │   └── analytics.css
-    │   ├── goals/
-    │   │   ├── GoalsPage.tsx
-    │   │   └── goals.css
-    │   ├── settings/
-    │   │   ├── SettingsPage.tsx
-    │   │   └── settings.css
-    │   ├── support/
-    │   │   ├── SupportPage.tsx
-    │   │   └── support.css
-    │   └── NotFoundPage.tsx
-    ├── widgets/
-    │   └── Layout/
-    ├── features/
-    ├── entities/
-    └── shared/
-        ├── api/
-        ├── config/
-        │   ├── env.ts
-        │   └── routes.ts
-        ├── constants/
-        │   └── app.ts
-        ├── lib/
-        │   └── mocks.ts
-        └── ui/
-            ├── Button/
-            ├── Card/
-            ├── Input/
-            ├── PagePlaceholder/
-            └── icons.tsx
-```
-
-## Конфигурация проекта
-
-В корне проекта находятся основные конфигурационные файлы:
-
-- `vite.config.ts` — конфигурация сборщика Vite;
-- `eslint.config.js` — настройки линтинга;
-- `.prettierrc` — правила форматирования кода;
-- `.prettierignore` — список файлов и папок, которые Prettier не должен форматировать;
-- `tsconfig.json` — базовая конфигурация TypeScript;
-- `tsconfig.app.json` — конфигурация TypeScript для клиентской части приложения;
-- `tsconfig.node.json` — конфигурация TypeScript для Node.js-окружения и служебной части проекта;
-- `.env.example` — пример файла переменных окружения.
 
 ## Основные модули
 
@@ -182,34 +134,8 @@ t-bank-practice-finpair-front/
 
 ## Взаимодействие с backend
 
-Frontend работает с отдельным backend-репозиторием `finpair-backend`.
+Frontend работает с отдельным backend-репозиторием [t-bank-practice-finpair-back](https://github.com/mekerial/t-bank-practice-finpair-back).
 
-Схема взаимодействия:
-
-```text
-Frontend SPA
-    |
-    v
-API Gateway
-    |
-    +--> AuthService
-    +--> CoupleService
-    +--> FinanceService
-    +--> AnalyticsService
-    +--> GoalService
-    +--> SupportService
-```
-
-## Переменные окружения
-
-В проекте используется файл `.env.example` как шаблон для локальной конфигурации.  
-Скопируй его в `.env` и укажи нужные значения.
-
-```env
-VITE_API_BASE_URL=http://localhost:5000
-```
-
-Эта переменная используется для подключения frontend-приложения к backend API.
 
 ## Сборка и качество кода
 
@@ -222,67 +148,10 @@ VITE_API_BASE_URL=http://localhost:5000
 
 ## Скрипты
 
-```bash
-npm run dev
-npm run build
-npm run preview
-npm run lint
-npm run format
-```
-
 - `npm run dev` — запуск dev-сервера;
 - `npm run build` — production-сборка проекта;
 - `npm run preview` — локальный просмотр production-сборки;
 - `npm run lint` — проверка кода ESLint;
 - `npm run format` — форматирование кода Prettier.
 
-## Локальный запуск
 
-### Требования
-
-- Node.js;
-- npm;
-- доступный backend API.
-
-### Установка зависимостей
-
-```bash
-npm install
-```
-
-### Настройка переменных окружения
-
-Создай локальный файл `.env` на основе `.env.example`:
-
-```env
-VITE_API_BASE_URL=http://localhost:5000
-```
-
-### Запуск в режиме разработки
-
-```bash
-npm run dev
-```
-
-### Сборка проекта
-
-```bash
-npm run build
-```
-
-### Предпросмотр production-сборки
-
-```bash
-npm run preview
-```
-
-### Проверка линтером
-
-```bash
-npm run lint
-```
-
-## Связанные репозитории
-
-- `finpair-frontend` — клиентская часть;
-- `finpair-backend` — backend и набор сервисов.
